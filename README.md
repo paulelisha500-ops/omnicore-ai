@@ -241,3 +241,4 @@ details.
 ## Links
 
 - Hugging Face: https://huggingface.co/Elisha622/omnicore-ai
+- GitHub: https://github.com/paulelisha500-ops/omnicore-ai
