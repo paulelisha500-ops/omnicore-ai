@@ -1,0 +1,43 @@
+# Minimal SearXNG config for OmniCore AI's web-search tool.
+# use_default_settings: true means everything not overridden here (engines,
+# categories, UI, etc.) inherits SearXNG's own sensible defaults — this file
+# only needs to change the two things that actually matter for our use case.
+use_default_settings: true
+
+general:
+  instance_name: "OmniCore AI Search"
+
+server:
+  # Required by SearXNG; only used for this container's internal session
+  # handling, never exposed publicly since this service isn't port-mapped
+  # to the host — see docker-compose.yml.
+  secret_key: "e2d78664fd98c01bdbc7d9d276b2d8fa6ea27671b7815118670f930666e62606"
+  limiter: false  # internal-only traffic from our own backend; no public users to rate-limit
+
+search:
+  formats:
+    - html
+    - json  # disabled by default upstream — this is what the backend's web_search tool actually needs
+  # SearXNG's default is 3.0s, which assumes a well-connected public instance.
+  # From inside Docker Desktop on a home connection, the TLS handshake to
+  # search.brave.com / html.duckduckgo.com / cse.google.com routinely takes
+  # longer than that, so every engine was failing with ConnectTimeout and the
+  # backend's web_search tool silently returned nothing. Diagnosed from
+  # searxng container logs (httpx.ConnectTimeout at 3.04s, repeatedly).
+  default_lang: "all"
+  max_request_timeout: 20.0
+
+outgoing:
+  request_timeout: 12.0      # per-engine HTTP timeout — was effectively 3.0
+  max_request_timeout: 20.0
+  pool_connections: 100
+  pool_maxsize: 20
+  enable_http2: true
+
+engines:
+  - name: wikidata
+    tokens: ['$is_disabled']
+  - name: ahmia
+    tokens: ['$is_disabled']
+  - name: torch
+    tokens: ['$is_disabled']

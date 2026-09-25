@@ -1,0 +1,28 @@
+# Environment
+.env
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Backend
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.egg-info/
+.venv/
+venv/
+
+# ML
+ml/data/
+ml/*.joblib
+ml/*.json
+!backend/app/ml/churn_model.joblib
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log

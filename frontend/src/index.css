@@ -1,0 +1,21 @@
+/* Tailwind utilities only — no @tailwind base.
+   Preflight is disabled in tailwind.config.js and `base` is omitted here for
+   the same reason: the existing UI is hand-styled with inline styles and CSS
+   variables, and a global reset would silently restyle all 13 modules.
+   Tailwind's job in this project is narrow — it powers the Magic UI
+   components and nothing else. */
+@tailwind components;
+@tailwind utilities;
+
+/* Honour the OS "reduce motion" setting for every Magic UI animation.
+   These are Tailwind utility animations (CSS-driven), so the JS hooks in
+   magicui.jsx can't reach them — without this the marquee, border beams,
+   ripple, shimmer and gradient text all kept running for users who asked for
+   no motion. Nothing here hides content; it only stops movement. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee, .animate-marquee-vertical, .animate-border-beam,
+  .animate-ripple, .animate-shimmer-slide, .animate-spin-around,
+  .animate-gradient, .animate-ping {
+    animation: none !important;
+  }
+}

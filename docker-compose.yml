@@ -1,0 +1,118 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3003:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # keeps the container's own node_modules, don't overwrite with host's (or absence of one)
+    environment:
+      - VITE_API_URL=http://localhost:8003
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    ports:
+      - "8003:8000"
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - OLLAMA_TEXT_MODEL=${OLLAMA_TEXT_MODEL:-qwen3:4b}
+      - OLLAMA_VISION_MODEL=${OLLAMA_VISION_MODEL:-qwen2.5vl:7b}
+      - SEARXNG_URL=${SEARXNG_URL:-http://searxng:8080}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-sonnet-4-6}
+      # Required, no fallback: compose stops with this message if it's unset.
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is not set - copy .env.example to .env and generate one (see the comment there)}
+      - DATABASE_URL=postgresql+asyncpg://omnicore:omnicore@postgres:5432/omnicore
+      - REDIS_URL=redis://redis:6379/0
+      - CORS_ORIGINS=["http://localhost:3003","http://localhost:5173","http://localhost:3000"]
+    volumes:
+      - ./backend/app:/app/app # live-reload friendly for local dev
+    depends_on:
+      - postgres
+      - redis
+      - searxng
+
+  # Self-hosted LLM server. Runs on CPU right here by default — no GPU, no
+  # extra flags, just `docker compose up`. Slower than a GPU (a text reply
+  # might take 10-60s instead of 1-2s), but it's real inference on a real
+  # model, completely free, and is the fastest way to confirm the whole
+  # pipeline (frontend -> backend -> model) actually works before spending
+  # any time or money on cloud GPU setup.
+  #
+  # When you're ready for GPU speed (a separate cloud GPU box, or this same
+  # box if it has an NVIDIA GPU + Container Toolkit installed), layer on
+  # docker-compose.gpu.yml instead of editing this file — see its header
+  # comment and README.md section 3 for both deployment topologies.
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - omnicore_ollama_data:/root/.ollama
+    environment:
+      # Only ever hold one model in memory. Without this, using two different
+      # models in the same session (e.g. a 4b for chat and a 1.7b elsewhere)
+      # loads both — which on a Docker VM with ~3.7GB is more than the host
+      # has, and took the whole Docker daemon down during testing.
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_NUM_PARALLEL=1
+    # `mem_limit`, not `deploy.resources` — the latter is only honoured by
+    # `docker stack deploy` under Swarm, and is silently ignored by
+    # `docker compose up`, which is how this project actually runs.
+    # A hard ceiling so a model load can never exhaust the VM and take
+    # Postgres/the backend down with it: Ollama gets OOM-killed on its own
+    # instead, which is recoverable and visible in `docker compose ps`.
+    mem_limit: 3g
+
+  # Self-hosted metasearch engine — gives the LLM real, current web results
+  # via tool-calling (see backend/app/routers/ai.py). No host port mapping
+  # on purpose: only the backend needs to reach it, at http://searxng:8080
+  # over the internal Docker network. No API key, no external dependency,
+  # no per-query cost — consistent with why you wanted your own LLM.
+  searxng:
+    image: searxng/searxng:latest
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+    environment:
+      - SEARXNG_BASE_URL=http://searxng:8080/
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=omnicore
+      - POSTGRES_PASSWORD=omnicore
+      - POSTGRES_DB=omnicore
+    ports:
+      - "5436:5432"
+    volumes:
+      - omnicore_pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6382:6379"
+
+  # Dev-only container VS Code's "Reopen in Container" attaches to. Has both
+  # Python and Node so you can run/debug either side from one integrated
+  # terminal. Not required for `docker compose up` — only used when you open
+  # this folder in VS Code with the Dev Containers extension.
+  devtools:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: sleep infinity
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  omnicore_pg_data:
+  omnicore_ollama_data:

@@ -1,0 +1,27 @@
+# GPU override — layers NVIDIA passthrough onto the base ollama service.
+# The base docker-compose.yml runs Ollama on CPU everywhere, no exceptions,
+# no failed starts on machines without a GPU. Use this file ONLY on a host
+# that actually has an NVIDIA GPU + the NVIDIA Container Toolkit installed
+# (standard on Linux cloud GPU images; NOT available through Docker Desktop
+# on Windows without WSL2 GPU passthrough configured).
+#
+# Usage (from the project root, on the GPU box):
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+#
+# Also bump the model sizes back up in .env once you're on GPU — the base
+# CPU-friendly defaults (qwen3:4b) are intentionally small; qwen3:14b is a
+# much stronger model that's impractical on CPU but comfortable on 16GB+ VRAM:
+#   OLLAMA_TEXT_MODEL=qwen3:14b
+#
+# Verify the toolkit is working before starting the stack:
+#   docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi
+
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
