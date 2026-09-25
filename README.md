@@ -236,3 +236,8 @@ details.
   if it seems stuck, refresh the browser tab.
 - **"Reopen in Container" never appears in VS Code** — press
   `Ctrl+Shift+P` → `Dev Containers: Reopen in Container` manually.
+
+
+## Links
+
+- Hugging Face: https://huggingface.co/Elisha622/omnicore-ai
