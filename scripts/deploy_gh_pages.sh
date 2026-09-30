@@ -13,8 +13,9 @@ touch "$TMP/.nojekyll"   # serve files as-is (no Jekyll processing)
 
 cd "$TMP"
 git init -q -b gh-pages
+git config core.autocrlf false
 git add -A
 git -c user.name="${GIT_AUTHOR_NAME:-omnicore-deploy}" -c user.email="${GIT_AUTHOR_EMAIL:-deploy@users.noreply.github.com}" \
   commit -q -m "Deploy OmniCore AI static build"
-git push -q -f "$(cd - >/dev/null && git remote get-url origin)" gh-pages
+git push -f "$(cd - >/dev/null && git remote get-url origin)" gh-pages
 echo "Published to gh-pages"
