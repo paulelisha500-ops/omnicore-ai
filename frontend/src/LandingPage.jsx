@@ -9,6 +9,7 @@ import {
   NumberTicker, BlurFade, BorderBeam, ShimmerButton, AnimatedGradientText,
   DotPattern, Marquee, Ripple,
 } from "./magicui.jsx";
+import InstallButton from "./InstallButton.jsx";
 
 /* ============================================================================
    PRE-LOGIN THEME
@@ -79,6 +80,7 @@ export const PREAUTH_TOKENS = `
   .oc-preauth .oc-gallery-grid .oc-span-tall { grid-row: span 1; }
 }
 @media (max-width: 560px) {
+  .oc-preauth .oc-install-label { display: none; }
   .oc-preauth .oc-modules-grid { grid-template-columns: 1fr !important; }
   .oc-preauth .oc-gallery-grid { grid-template-columns: 1fr !important; }
   .oc-preauth .oc-gallery-grid .oc-span-wide, .oc-preauth .oc-gallery-grid .oc-span-full { grid-column: span 1 !important; }
@@ -91,153 +93,143 @@ export const PREAUTH_TOKENS = `
    ============================================================================ */
 const text = {
   en: {
-    nav: { modules: "Modules", roadmap: "Roadmap", about: "About", faq: "FAQ", signIn: "Sign in", menu: "Menu", primary: "Primary", skip: "Skip to content" },
+    nav: { modules: "Modules", roadmap: "Roadmap", about: "About", faq: "FAQ", signIn: "Open the app", menu: "Menu", primary: "Primary", skip: "Skip to content" },
     hero: {
       eyebrow: "Enterprise Multimodal AI Operating System",
       titleA: "One AI core for how your", titleHighlight: "whole company", titleB: "actually works",
-      sub: "Chat, vision, documents, speech, agents, and forecasting — running on your own self-hosted model, a real trained ML model, and a backend honest enough to show you exactly what's live and what isn't.",
-      ctaPrimary: "Get started", ctaSecondary: "See what's really live",
-      liveNow: "modules live right now", modulesTotal: "modules total, each labeled honestly",
+      sub: "Chat, documents, vision, speech, agents, forecasting and automation — open it and it works. Instant online AI with nothing to install, or a fully private mode that runs inside your browser.",
+      ctaPrimary: "Get started — it's free", ctaSecondary: "Explore the modules",
+      liveNow: "modules, all working", modulesTotal: "installs or API keys needed",
     },
     trust: [
-      { k: "84.5%", v: "Churn model ROC-AUC, on real held-out data" },
-      { k: "7,043", v: "Real customer records behind Module 06" },
-      { k: "2", v: "Self-hosted models — zero per-token cost" },
-      { k: "0", v: "API keys required to run the default setup" },
+      { k: "84.5%", v: "Churn model ROC-AUC on real held-out customers" },
+      { k: "7,043", v: "Real customer records behind the churn model" },
+      { k: "0", v: "Downloads needed — AI runs on Hugging Face" },
+      { k: "2", v: "Languages, both first-class: English and Arabic" },
     ],
     modules: {
-      eyebrow: "What's actually running", title: "Every module, labeled honestly",
-      desc: "Every card below carries its real status — not marketing gloss. The full breakdown, module by module, lives in PROJECT_NOTES.md in the repo.",
-      statusLabel: { live: "Live", partial: "Live (partial)", sample: "Sample data" },
+      eyebrow: "What's inside", title: "Thirteen modules. All of them real.",
+      desc: "Every card below is a working feature — open the app and try any of them in seconds.",
+      statusLabel: { live: "Live", partial: "Live", sample: "Live" },
     },
-    gallery: {
-      eyebrow: "Built for real work", title: "The people this is actually built for",
-    },
+    gallery: { eyebrow: "Built for real work", title: "The people this is actually built for" },
     roadmap: {
-      eyebrow: "Where this is headed", title: "The bigger vision — not built yet, said plainly",
-      desc: "This is the direction, not a claim about today's build. Each item below is a real, scoped next step toward the full enterprise-AI-OS vision.",
+      eyebrow: "Where this is headed", title: "What's next",
+      desc: "Today's build is complete and runs entirely in the browser. These are the next steps being explored.",
     },
     about: {
-      eyebrow: "About this build", title: "Built to be checked, not just believed",
-      p1: "This platform was built end to end — frontend, FastAPI backend, a real trained churn model, real Postgres-backed authentication — with one rule: never claim a feature is live when it isn't. PROJECT_NOTES.md in the repo documents every single module's real status, including the two real bugs found and fixed along the way (a thinking-mode leak that broke JSON parsing, and swallowed error messages that hid the real cause of failures).",
-      p2: "It's designed for the people who'd actually use a platform like this day to day — across the roles below — not just for a demo audience.",
+      eyebrow: "How it works", title: "Open it and go — online by default, private when you want",
+      p1: "By default OmniCore answers with GPT-OSS 20B (and reads images with Qwen3-VL) on Hugging Face's servers — sign in once with a free Hugging Face account and replies start in about a second, with nothing to download. Prefer full privacy? Switch to the on-device engine in Settings: open models (Qwen3, Qwen3.5, Whisper) then run on your own graphics card with WebGPU, and nothing you type leaves your device.",
+      p2: "Your workspace — accounts, documents, chats, automations — is stored in your browser's own database, never on a server. The churn model is a real scikit-learn Random Forest exported to run in JavaScript with identical results.",
       forLabel: "Built with these roles in mind",
       roles: ["CEOs", "Managers", "Analysts", "Engineers", "Customer Support", "HR", "Finance", "IT Operations", "Government Agencies"],
     },
     faq: {
       eyebrow: "Questions", title: "Frequently asked",
       items: [
-        { q: "Is this actually calling a real AI model?", a: "Yes. By default every AI module calls a self-hosted Ollama model — qwen3:4b for text, qwen2.5vl:7b for vision — running in this same Docker Compose stack, no API key and no per-token cost. Set LLM_PROVIDER=anthropic in .env to route the same calls to Claude instead; the frontend never knows which one answered." },
-        { q: "What's real vs. sample data?", a: "Of thirteen modules, eleven are fully live (real model calls, a real trained model, persisted Postgres state, or live retrieval), one is live in part (Recommendation Engine), and one (Integration Hub) is representative UI over sample data — and says so in the product. The Modules section above shows every module's actual status; PROJECT_NOTES.md has the full per-module explanation." },
-        { q: "How accurate is the churn prediction model, really?", a: "78.3% accuracy, 84.5% ROC-AUC, evaluated on 1,409 real customers the model never saw during training or tuning — not the 90% accuracy that's sometimes asked for, and there's a real reason for that: only 26.5% of customers in the real dataset churn, so accuracy alone is a misleading target on imbalanced data. The model was selected on F1, not accuracy, for exactly that reason." },
-        { q: "Is my data private?", a: "Your documents, chats and uploads stay in this Docker stack: with the default Ollama provider the AI model runs locally and no external AI API is called. The exception is web lookup. Chat's web-search tool, the Research Agent, Trade & Regulatory, and Enterprise Search (only when you tick \"Also search the web\") send the search text — never your documents — to public search engines through the self-hosted SearXNG. Every data endpoint requires a signed-in token, and sign-in itself is rate-limited." },
-        { q: "Can I run this myself?", a: "Yes — one docker compose up --build from the project root. No GPU and no cloud account required for the default CPU setup. The full Windows/VS Code walkthrough is in README.md." },
-        { q: "What are the demo accounts?", a: "admin / admin123 (Platform Admin) and analyst / analyst123 (Analyst) — seeded for local demo use only. Change or remove them before this runs anywhere but your own machine." },
-        { q: "Is this production-ready?", a: "Honestly: not yet. The core AI, the trained model, rate-limited sign-in with a required signing secret, per-route authentication and a persisted audit log are real. Still missing: a job queue so automations dispatch real work (a \"run\" is currently recorded, not delivered), real OAuth connectors, and production hardening such as HTTPS termination, secret management and backups — see \"Where this is headed\" above." },
+        { q: "Do I have to download or install anything?", a: "No. Open the page, create your workspace, and sign in once with your free Hugging Face account — the AI (GPT-OSS 20B for text, Qwen3-VL for images) then runs on Hugging Face's servers. No download and no API key. You can also install OmniCore as an app from your browser." },
+        { q: "How private is it?", a: "Your workspace is stored only in your browser. In the default online mode, the content of each AI request is sent to Hugging Face Inference Providers to be answered, using your own Hugging Face account. For complete privacy, switch Settings → AI engine to On this device: open models then run inside your browser and nothing you type leaves your device." },
+        { q: "Where is my data stored?", a: "In your browser's IndexedDB on this device. Accounts use PBKDF2-hashed passwords. You can export your whole workspace to a file, import it on another device, or erase it at any time from Settings." },
+        { q: "Can my team share one workspace?", a: "Accounts live on the device they were created on, so several people can share one computer with separate accounts and roles. Moving between devices works through workspace export and import." },
+        { q: "How accurate is the churn model?", a: "78.3% accuracy and 84.5% ROC-AUC on 1,409 real customers it never saw in training. Only 26.5% of customers churn, so the model is tuned for F1 and recall rather than raw accuracy. You can score your own customer CSV or the full IBM dataset in the app." },
+        { q: "Do automations really do anything?", a: "Yes. Rules fire on real events (a document analyzed, a high-risk prediction, a meeting summarized, a schedule) and can notify you, post to Slack or Discord, call your webhook, open an email, or save to the knowledge base — while the app is open." },
+        { q: "Is it free?", a: "Yes. It's a static site hosted for free on Hugging Face and GitHub Pages, and the models are open. There are no API keys or per-message costs." },
       ],
     },
-    ctaBand: { title: "See exactly what's real. Then sign in.", sub: "No sales call, no waitlist — the demo accounts are right there.", button: "Get started" },
-    footer: {
-      tagline: "Enterprise Multimodal AI Operating System",
-      builtWith: "Built with",
-      frontendLabel: "Frontend", backendLabel: "Backend & AI",
-    },
+    ctaBand: { title: "Your AI workspace is one click away.", sub: "Create an account on this device in seconds. No email, no credit card.", button: "Get started" },
+    footer: { tagline: "Enterprise Multimodal AI Operating System", builtWith: "Built with", frontendLabel: "Interface", backendLabel: "AI" },
   },
   ar: {
-    nav: { modules: "الوحدات", roadmap: "خارطة الطريق", about: "حول", faq: "الأسئلة الشائعة", signIn: "تسجيل الدخول", menu: "القائمة", primary: "الرئيسية", skip: "تخطَّ إلى المحتوى" },
+    nav: { modules: "الوحدات", roadmap: "خارطة الطريق", about: "حول", faq: "الأسئلة الشائعة", signIn: "افتح التطبيق", menu: "القائمة", primary: "الرئيسية", skip: "تخطَّ إلى المحتوى" },
     hero: {
       eyebrow: "نظام تشغيل ذكاء اصطناعي متعدد الوسائط للمؤسسات",
       titleA: "نواة ذكاء اصطناعي واحدة لكيفية عمل", titleHighlight: "شركتك بأكملها", titleB: "فعليًا",
-      sub: "دردشة، رؤية حاسوبية، مستندات، صوت، وكلاء، وتنبؤات — تعمل على نموذجك المستضاف ذاتيًا، ونموذج تعلّم آلي مدرّب حقيقي، وخادم صريح بما يكفي ليُظهر لك بالضبط ما هو مباشر وما ليس كذلك.",
-      ctaPrimary: "ابدأ الآن", ctaSecondary: "شاهد ما هو مباشر فعلًا",
-      liveNow: "وحدات مباشرة الآن", modulesTotal: "وحدة إجمالًا، كل منها موصوفة بصدق",
+      sub: "دردشة ومستندات ورؤية وصوت ووكلاء وتنبؤات وأتمتة — افتحه ويعمل مباشرة. ذكاء اصطناعي فوري عبر الإنترنت بلا تثبيت، أو وضع خاص بالكامل يعمل داخل متصفحك.",
+      ctaPrimary: "ابدأ مجانًا", ctaSecondary: "استكشف الوحدات",
+      liveNow: "وحدة، كلها تعمل", modulesTotal: "تثبيت أو مفاتيح API مطلوبة",
     },
     trust: [
-      { k: "84.5%", v: "دقة نموذج التسرّب (ROC-AUC) على بيانات حقيقية" },
-      { k: "7,043", v: "سجل عميل حقيقي خلف الوحدة 06" },
-      { k: "2", v: "نموذجان مستضافان ذاتيًا — بدون تكلفة لكل رمز" },
-      { k: "0", v: "مفاتيح API مطلوبة لتشغيل الإعداد الافتراضي" },
+      { k: "84.5%", v: "دقة نموذج التسرّب (ROC-AUC) على عملاء حقيقيين محجوبين" },
+      { k: "7,043", v: "سجل عميل حقيقي خلف نموذج التسرّب" },
+      { k: "0", v: "تنزيلات مطلوبة — الذكاء الاصطناعي يعمل على Hugging Face" },
+      { k: "2", v: "لغتان من الدرجة الأولى: العربية والإنجليزية" },
     ],
     modules: {
-      eyebrow: "ما يعمل فعليًا الآن", title: "كل وحدة، موصوفة بصدق",
-      desc: "كل بطاقة أدناه تحمل حالتها الحقيقية — لا تجميل تسويقي. التفاصيل الكاملة لكل وحدة موجودة في PROJECT_NOTES.md داخل المستودع.",
-      statusLabel: { live: "مباشر", partial: "مباشر جزئيًا", sample: "بيانات توضيحية" },
+      eyebrow: "ما بالداخل", title: "ثلاث عشرة وحدة. كلها حقيقية.",
+      desc: "كل بطاقة أدناه ميزة تعمل — افتح التطبيق وجرّب أيًا منها خلال ثوانٍ.",
+      statusLabel: { live: "مباشر", partial: "مباشر", sample: "مباشر" },
     },
-    gallery: {
-      eyebrow: "مبني للعمل الفعلي", title: "الأشخاص الذين بُني هذا من أجلهم فعليًا",
-    },
+    gallery: { eyebrow: "مبني للعمل الفعلي", title: "الأشخاص الذين بُني هذا من أجلهم فعليًا" },
     roadmap: {
-      eyebrow: "إلى أين يتجه هذا", title: "الرؤية الأكبر — لم تُبنَ بعد، وهذا مذكور بوضوح",
-      desc: "هذا هو الاتجاه، وليس ادعاءً حول البناء الحالي. كل عنصر أدناه خطوة تالية حقيقية ومحددة نحو رؤية نظام تشغيل الذكاء الاصطناعي المؤسسي الكامل.",
+      eyebrow: "إلى أين يتجه هذا", title: "ما التالي",
+      desc: "البناء الحالي مكتمل ويعمل بالكامل داخل المتصفح. هذه هي الخطوات التالية قيد الاستكشاف.",
     },
     about: {
-      eyebrow: "حول هذا البناء", title: "بُني ليُراجَع، لا ليُصدَّق فقط",
-      p1: "بُنيت هذه المنصة من البداية إلى النهاية — الواجهة الأمامية، خادم FastAPI، نموذج تسرّب حقيقي مدرّب، ومصادقة حقيقية مدعومة بـ Postgres — بقاعدة واحدة: لا تدّعِ أن ميزة ما مباشرة إن لم تكن كذلك. يوثّق ملف PROJECT_NOTES.md في المستودع الحالة الحقيقية لكل وحدة، بما في ذلك خطأان حقيقيان تم اكتشافهما وإصلاحهما أثناء البناء.",
-      p2: "صُمم هذا من أجل الأشخاص الذين قد يستخدمون فعليًا منصة كهذه يوميًا — عبر الأدوار أدناه — لا لجمهور عرض توضيحي فقط.",
+      eyebrow: "كيف يعمل", title: "افتحه وابدأ — عبر الإنترنت افتراضيًا، وخاص عندما تريد",
+      p1: "افتراضيًا يجيب أومنيكور بنموذج GPT-OSS 20B (ويقرأ الصور بنموذج Qwen3-VL) على خوادم Hugging Face — سجّل الدخول مرة واحدة بحساب مجاني فتبدأ الإجابات خلال ثانية تقريبًا ولا يوجد ما يُنزَّل. تفضّل الخصوصية الكاملة؟ اختر المحرك «على هذا الجهاز» من الإعدادات: تعمل عندها نماذج مفتوحة (Qwen3 وQwen3.5 وWhisper) على بطاقة الرسومات لديك عبر WebGPU، ولا يغادر جهازك شيء مما تكتبه.",
+      p2: "مساحة عملك — الحسابات والمستندات والمحادثات والأتمتة — محفوظة في قاعدة بيانات متصفحك، وليس على أي خادم. ونموذج التسرّب غابة عشوائية حقيقية من scikit-learn مُصدَّرة لتعمل في JavaScript بنتائج مطابقة.",
       forLabel: "بُني مع وضع هذه الأدوار في الاعتبار",
       roles: ["الرؤساء التنفيذيون", "المديرون", "المحللون", "المهندسون", "دعم العملاء", "الموارد البشرية", "المالية", "عمليات تقنية المعلومات", "الجهات الحكومية"],
     },
     faq: {
       eyebrow: "أسئلة", title: "الأسئلة الشائعة",
       items: [
-        { q: "هل هذا يستدعي فعليًا نموذج ذكاء اصطناعي حقيقي؟", a: "نعم. افتراضيًا، تستدعي كل وحدة ذكاء اصطناعي نموذج Ollama مستضافًا ذاتيًا — qwen3:4b للنصوص وqwen2.5vl:7b للرؤية — يعمل ضمن نفس حزمة Docker Compose هذه، دون مفتاح API أو تكلفة لكل رمز. يمكن ضبط LLM_PROVIDER=anthropic في .env لتوجيه نفس الاستدعاءات إلى Claude بدلًا من ذلك." },
-        { q: "ما الحقيقي مقابل التوضيحي؟", a: "من أصل ثلاث عشرة وحدة، إحدى عشرة مباشرة بالكامل، وواحدة مباشرة جزئيًا (محرك التوصيات)، وواحدة (مركز التكاملات) واجهة تمثيلية فوق بيانات توضيحية — ويُذكر ذلك داخل المنتج. قسم الوحدات أعلاه يوضح الحالة الفعلية لكل وحدة." },
-        { q: "ما مدى دقة نموذج التنبؤ بالتسرّب فعليًا؟", a: "78.3% دقة، و84.5% ROC-AUC، على 1,409 عميلًا حقيقيًا لم يرهم النموذج أثناء التدريب أو الضبط — وليس 90% كما يُطلب أحيانًا، ولذلك سبب حقيقي: 26.5% فقط من العملاء في البيانات الحقيقية يتسربون فعلًا، لذا فإن الدقة وحدها هدف مضلل في بيانات غير متوازنة." },
-        { q: "هل بياناتي خاصة؟", a: "مستنداتك ومحادثاتك وما ترفعه تبقى داخل حزمة Docker هذه: مع مزوّد Ollama الافتراضي يعمل النموذج محليًا ولا يُستدعى أي واجهة ذكاء اصطناعي خارجية. الاستثناء هو البحث في الويب: أداة البحث في الدردشة ووكيل البحث والتجارة والتنظيم والبحث المؤسسي (فقط عند تفعيل «ابحث في الويب أيضًا») ترسل نص البحث — وليس مستنداتك أبدًا — إلى محركات بحث عامة عبر SearXNG المستضاف ذاتيًا. كل واجهة بيانات تتطلب رمز دخول صالحًا، وتسجيل الدخول نفسه محدود المحاولات." },
-        { q: "هل يمكنني تشغيل هذا بنفسي؟", a: "نعم — أمر واحد docker compose up --build من جذر المشروع. لا حاجة لبطاقة رسومات أو حساب سحابي للإعداد الافتراضي على المعالج. الدليل الكامل في README.md." },
-        { q: "ما هي الحسابات التجريبية؟", a: "admin / admin123 (مسؤول المنصة) وanalyst / analyst123 (محلّل) — مخصصة للاستخدام التجريبي المحلي فقط." },
-        { q: "هل هذا جاهز للإنتاج؟", a: "بصراحة: ليس بعد. جوهر الذكاء الاصطناعي والنموذج المدرّب وتسجيل دخول محدود المحاولات بمفتاح توقيع إلزامي والتحقق لكل مسار وسجل تدقيق دائم كلها حقيقية. الناقص: طابور مهام لتنفيذ الأتمتة فعليًا (التشغيل حاليًا مُسجَّل وليس مُسلَّمًا)، وموصلات OAuth حقيقية، وتحصين الإنتاج مثل إنهاء HTTPS وإدارة الأسرار والنسخ الاحتياطي — راجع «إلى أين يتجه هذا» أعلاه." },
+        { q: "هل أحتاج إلى تنزيل أو تثبيت أي شيء؟", a: "لا. افتح الصفحة وأنشئ مساحة عملك وسجّل الدخول مرة واحدة بحساب Hugging Face المجاني — يعمل بعدها الذكاء الاصطناعي (GPT-OSS 20B للنصوص وQwen3-VL للصور) على خوادم Hugging Face. بلا تنزيل ولا مفتاح API. ويمكنك أيضًا تثبيت أومنيكور كتطبيق من متصفحك." },
+        { q: "ما مدى الخصوصية؟", a: "مساحة عملك محفوظة في متصفحك فقط. في الوضع الافتراضي عبر الإنترنت يُرسَل محتوى كل طلب إلى Hugging Face للإجابة عنه باستخدام حسابك. ولخصوصية كاملة اختر في الإعدادات «على هذا الجهاز»: تعمل عندها النماذج المفتوحة داخل متصفحك ولا يغادر جهازك شيء مما تكتبه." },
+        { q: "هل يعمل الذكاء الاصطناعي فعلًا داخل متصفحي؟", a: "نعم. يستخدم أومنيكور مكتبتي Transformers.js وONNX Runtime Web لتشغيل Qwen3 (النصوص) وQwen3.5 (الصور) وWhisper (الكلام) مباشرة في الصفحة — وكلها متعددة اللغات بما فيها العربية. في أول استخدام يطلب إذنك قبل تنزيل نموذج النصوص (نحو 590 ميغابايت)، ولا تُنزَّل نماذج الرؤية والكلام إلا عند أول استخدام لها، ثم يُحمَّل كل شيء من ذاكرة المتصفح." },
+        { q: "ماذا أحتاج؟", a: "متصفح حديث مثل Chrome أو Edge أو Safari أو Firefox. بطاقة رسومات تدعم WebGPU تجعل الإجابات سريعة، وبدونها تعمل النماذج على المعالج بشكل أبطأ. الهواتف الحديثة تعمل أيضًا." },
+        { q: "أين تُحفظ بياناتي؟", a: "في IndexedDB بمتصفحك على هذا الجهاز. الحسابات تستخدم كلمات مرور مجزأة بـ PBKDF2. يمكنك تصدير مساحة عملك إلى ملف أو استيرادها على جهاز آخر أو مسحها في أي وقت من الإعدادات." },
+        { q: "هل يمكن لفريقي مشاركة مساحة عمل؟", a: "الحسابات تبقى على الجهاز الذي أُنشئت عليه، لذا يمكن لعدة أشخاص مشاركة حاسوب واحد بحسابات وأدوار منفصلة. والانتقال بين الأجهزة يتم عبر تصدير مساحة العمل واستيرادها." },
+        { q: "ما دقة نموذج التسرّب؟", a: "78.3% دقة و84.5% ROC-AUC على 1,409 عملاء حقيقيين لم يرهم أثناء التدريب. 26.5% فقط من العملاء يتسربون، لذا ضُبط النموذج على F1 والاستدعاء لا الدقة الخام. يمكنك تقييم ملف عملائك أو بيانات IBM كاملة داخل التطبيق." },
+        { q: "هل تنفّذ الأتمتة شيئًا فعلًا؟", a: "نعم. تعمل القواعد على أحداث حقيقية (تحليل مستند، تنبؤ عالي الخطورة، تلخيص اجتماع، جدول زمني) ويمكنها إشعارك أو النشر في Slack أو Discord أو استدعاء Webhook أو فتح بريد أو الحفظ في قاعدة المعرفة — أثناء فتح التطبيق." },
+        { q: "هل هو مجاني؟", a: "نعم. إنه موقع ثابت مستضاف مجانًا على Hugging Face وGitHub Pages، والنماذج مفتوحة. لا مفاتيح API ولا تكلفة لكل رسالة." },
       ],
     },
-    ctaBand: { title: "شاهد بالضبط ما هو حقيقي. ثم سجّل الدخول.", sub: "لا مكالمة مبيعات، لا قائمة انتظار — الحسابات التجريبية جاهزة أمامك.", button: "ابدأ الآن" },
-    footer: {
-      tagline: "نظام تشغيل ذكاء اصطناعي متعدد الوسائط للمؤسسات",
-      builtWith: "مبني باستخدام",
-      frontendLabel: "الواجهة الأمامية", backendLabel: "الخادم والذكاء الاصطناعي",
-    },
+    ctaBand: { title: "مساحة عملك بالذكاء الاصطناعي على بُعد نقرة.", sub: "أنشئ حسابًا على هذا الجهاز في ثوانٍ. بلا بريد إلكتروني ولا بطاقة ائتمان.", button: "ابدأ الآن" },
+    footer: { tagline: "نظام تشغيل ذكاء اصطناعي متعدد الوسائط للمؤسسات", builtWith: "مبني باستخدام", frontendLabel: "الواجهة", backendLabel: "الذكاء الاصطناعي" },
   },
 };
 
 const MODULE_INFO = [
   { key: "dashboard", icon: Home, en: "Executive Dashboard", ar: "لوحة القيادة التنفيذية", status: "live",
-    enD: "Real AI insight, and the 14-day trend is computed from your persisted activity — no hardcoded chart.",
-    arD: "رؤية ذكاء اصطناعي حقيقية، ومخطط الأيام الـ14 محسوب من نشاطك المحفوظ — بلا بيانات ثابتة." },
+    enD: "KPIs, a 14-day activity trend and module usage — all computed from what you actually do, plus an on-demand AI insight.",
+    arD: "مؤشرات أداء ومخطط نشاط 14 يومًا واستخدام الوحدات — كلها محسوبة مما تفعله فعليًا، مع رؤية ذكاء اصطناعي عند الطلب." },
   { key: "chat", icon: MessageSquare, en: "AI Chat Assistant", ar: "مساعد الدردشة الذكي", status: "live",
-    enD: "Real calls to your self-hosted model (or Claude), grounded in your notes, with real web search.",
-    arD: "استدعاءات حقيقية لنموذجك المستضاف ذاتيًا (أو Claude)، مع الاستناد إلى ملاحظاتك وبحث ويب حقيقي." },
+    enD: "Saved conversations with streaming answers, grounded in your knowledge base with citations, plus optional Wikipedia lookup and image questions.",
+    arD: "محادثات محفوظة بإجابات متدفقة، مستندة إلى قاعدة معرفتك مع الاستشهادات، مع بحث اختياري في ويكيبيديا وأسئلة عن الصور." },
   { key: "documents", icon: FileText, en: "Document Intelligence", ar: "ذكاء المستندات", status: "live",
-    enD: "Upload a document or image — the model summarizes, extracts key points, answers follow-ups.",
-    arD: "ارفع مستندًا أو صورة — يلخّص النموذج ويستخرج النقاط الرئيسية ويجيب عن الأسئلة." },
+    enD: "PDF, Word, text or a photo of a page — summaries, key points and Q&A, with long documents summarized part by part.",
+    arD: "PDF أو Word أو نص أو صورة صفحة — ملخصات ونقاط رئيسية وأسئلة وأجوبة، مع تلخيص المستندات الطويلة جزءًا بجزء." },
   { key: "vision", icon: Camera, en: "Computer Vision", ar: "الرؤية الحاسوبية", status: "live",
-    enD: "Real vision-model analysis of uploaded images — scene, objects, and multilingual OCR.",
-    arD: "تحليل حقيقي بنموذج رؤية للصور المرفوعة — المشهد والعناصر وتعرّف ضوئي متعدد اللغات." },
+    enD: "Describe scenes and objects, read text in images (multilingual), or ask your own question — straight from your phone camera too.",
+    arD: "صف المشاهد والعناصر، واقرأ النص في الصور (بعدة لغات)، أو اطرح سؤالك — حتى مباشرة من كاميرا هاتفك." },
   { key: "speech", icon: Mic, en: "Speech AI", ar: "الذكاء الصوتي", status: "live",
-    enD: "Live mic transcription and text-to-speech in the browser, plus AI summarization of transcripts.",
-    arD: "تفريغ صوتي مباشر وتحويل نص إلى كلام عبر المتصفح، مع تلخيص بالذكاء الاصطناعي." },
+    enD: "Private on-device transcription with Whisper, meeting summaries with decisions and action items, and text-to-speech.",
+    arD: "تفريغ صوتي خاص على الجهاز بواسطة Whisper، وملخصات اجتماعات بالقرارات وبنود العمل، وتحويل النص إلى كلام." },
   { key: "agents", icon: Bot, en: "AI Agent Platform", ar: "منصة الوكلاء الأذكياء", status: "live",
-    enD: "Eight live agents, each with its own system prompt — the Reporting Agent reads your real session.",
-    arD: "ثمانية وكلاء مباشرين، لكل منهم تعليماته الخاصة — وكيل التقارير يقرأ جلستك الحقيقية." },
+    enD: "Eight specialised agents — research with live sources, a data analyst that profiles your CSV, and a reporting agent that reads your real workspace.",
+    arD: "ثمانية وكلاء متخصصين — بحث بمصادر حية، ومحلل بيانات يدرس ملف CSV، ووكيل تقارير يقرأ مساحة عملك الحقيقية." },
   { key: "analytics", icon: TrendingUp, en: "Predictive Analytics", ar: "التحليلات التنبؤية", status: "live",
-    enD: "A real scikit-learn model trained on 7,043 real customers — try a live churn prediction.",
-    arD: "نموذج حقيقي مبني بـ scikit-learn ومدرّب على 7,043 عميلًا حقيقيًا — جرّب توقعًا حيًا." },
-  { key: "recommend", icon: Star, en: "Recommendation Engine", ar: "محرك التوصيات", status: "partial",
-    enD: "Live recommendations grounded in your session's real data; catalog tabs below use sample records.",
-    arD: "توصيات حية مبنية على بيانات جلستك الحقيقية؛ تبويبات الكتالوج أدناه توضيحية." },
+    enD: "A real churn model trained on 7,043 customers: live what-if predictions, risk levers, and batch scoring of whole CSV files.",
+    arD: "نموذج تسرّب حقيقي مدرّب على 7,043 عميلًا: تنبؤات فورية، وعوامل خفض الخطر، وتقييم ملفات CSV كاملة." },
+  { key: "recommend", icon: Star, en: "Recommendation Engine", ar: "محرك التوصيات", status: "live",
+    enD: "Next steps, related documents, one-click automations and at-risk customers — derived from your real activity.",
+    arD: "خطوات تالية ومستندات ذات صلة وأتمتة بنقرة وعملاء معرّضون — مستخلصة من نشاطك الحقيقي." },
   { key: "search", icon: Search, en: "Enterprise Search", ar: "البحث المؤسسي", status: "live",
-    enD: "Server-side ranked search over your session corpus and the live web, with real source URLs.",
-    arD: "بحث مرتَّب على الخادم عبر محتوى جلستك والويب المباشر، مع روابط مصادر حقيقية." },
+    enD: "Instant ranked search across every chat, document, meeting, analysis and agent run — with an AI answer from the results.",
+    arD: "بحث فوري مرتَّب في كل محادثة ومستند واجتماع وتحليل وتشغيل وكيل — مع إجابة ذكاء اصطناعي من النتائج." },
   { key: "automation", icon: Workflow, en: "Automation Platform", ar: "منصة الأتمتة", status: "live",
-    enD: "Rules are real Postgres rows — create, toggle, run and delete all survive a refresh. A run is recorded, not yet dispatched.",
-    arD: "القواعد صفوف حقيقية في Postgres — الإنشاء والتبديل والتشغيل والحذف تبقى بعد التحديث. التشغيل مُسجَّل ولم يُرسَل بعد." },
+    enD: "When-this-then-that rules on real events and schedules — notify, post to Slack or Discord, call webhooks, file to knowledge.",
+    arD: "قواعد «إذا حدث هذا فافعل ذاك» على أحداث وجداول حقيقية — إشعار، نشر في Slack أو Discord، Webhooks، حفظ في المعرفة." },
   { key: "security", icon: Shield, en: "Security & Governance", ar: "الأمان والحوكمة", status: "live",
-    enD: "Real backend-verified login, role-gating, and a live timestamped audit log.",
-    arD: "تسجيل دخول حقيقي يتحقق منه الخادم، وتقييد حسب الدور، وسجل تدقيق مباشر." },
-  { key: "plugins", icon: PlugZap, en: "Integration Hub", ar: "مركز التكاملات", status: "sample",
-    enD: "Connect/disconnect toggles work locally; real OAuth connectors are the honestly-labeled next step.",
-    arD: "مفاتيح الربط تعمل محليًا؛ موصلات OAuth الحقيقية هي الخطوة التالية الموصوفة بوضوح." },
+    enD: "Hashed-password accounts, enforced roles, user management and a filterable, exportable audit log.",
+    arD: "حسابات بكلمات مرور مجزأة، وأدوار مفروضة، وإدارة مستخدمين، وسجل تدقيق قابل للتصفية والتصدير." },
+  { key: "plugins", icon: PlugZap, en: "Integration Hub", ar: "مركز التكاملات", status: "live",
+    enD: "Slack, Discord, custom webhooks, email and desktop notifications — connect in seconds, test with one click.",
+    arD: "Slack وDiscord وWebhooks مخصصة والبريد وإشعارات سطح المكتب — اربطها في ثوانٍ واختبرها بنقرة." },
   { key: "trade", icon: Scale, en: "Trade & Regulatory", ar: "التجارة والتنظيم", status: "live",
-    enD: "Cross-border trade law, retrieved live from official government portals and cited — never written from memory.",
-    arD: "قانون التجارة عبر الحدود، يُسترجع مباشرة من البوابات الحكومية الرسمية مع التوثيق — لا يُكتب من الذاكرة." },
+    enD: "Cross-border trade questions answered from live official sources — US Federal Register, GOV.UK, EU — always cited.",
+    arD: "أسئلة التجارة عبر الحدود تُجاب من مصادر رسمية حية — السجل الفيدرالي الأمريكي وGOV.UK والاتحاد الأوروبي — مع التوثيق دائمًا." },
 ];
 
 // Free-license stock photography (Unsplash) for atmosphere only — not
@@ -245,16 +237,15 @@ const MODULE_INFO = [
 // Sized 2/1/2 across a bento grid; captions tie each shot to a real product
 // theme without claiming the photo depicts OmniCore itself.
 // Kept as arrays, not one delimited string. The previous version stored the
-// stack as "React · Vite · … · Ollama (qwen3:4b · qwen2.5vl:7b) · …" and split
+// stack as one "·"-delimited string and split
 // it on "·" at render time, which tore the parenthetical in half and shipped a
 // marquee item reading "qwen2.5vl:7b)". Entries are proper nouns, so they are
 // not translated — only the row labels are.
 const STACK_FRONTEND = [
-  "React", "Vite", "Tailwind CSS", "Magic UI", "Motion", "Recharts", "lucide-react",
+  "React", "Vite", "Tailwind CSS", "Magic UI", "Motion", "Recharts", "IndexedDB", "lucide-react",
 ];
 const STACK_BACKEND = [
-  "FastAPI", "PostgreSQL", "Redis", "Ollama", "qwen3:4b", "qwen2.5vl:7b",
-  "SearXNG", "scikit-learn", "Docker",
+  "Transformers.js", "ONNX Runtime Web", "WebGPU", "Qwen3", "Qwen3.5", "Whisper", "scikit-learn", "pdf.js",
 ];
 
 const GALLERY_PHOTOS = [
@@ -276,18 +267,18 @@ const GALLERY_PHOTOS = [
 ];
 
 const ROADMAP_ITEMS = [
-  { icon: Layers, en: { t: "Pixel-level computer vision", d: "YOLO / Segment Anything (SAM) for real object detection and segmentation, alongside today's free-form vision analysis." },
-    ar: { t: "رؤية حاسوبية على مستوى البكسل", d: "YOLO / Segment Anything (SAM) لكشف وتجزئة حقيقيين للعناصر، إلى جانب التحليل الحر الحالي." } },
-  { icon: Bot, en: { t: "Multi-agent orchestration", d: "LangChain / LangGraph coordinating specialist agents through a planner → specialists → validator pipeline." },
-    ar: { t: "تنسيق متعدد الوكلاء", d: "LangChain / LangGraph لتنسيق وكلاء متخصصين عبر مخطط: مخطِّط ← متخصصون ← مدقِّق." } },
-  { icon: Server, en: { t: "Knowledge graph + vector retrieval at scale", d: "Neo4j, Elasticsearch, and pgvector replacing today's in-memory, prompt-stuffed RAG." },
-    ar: { t: "رسم معرفي واسترجاع متجهي على نطاق واسع", d: "Neo4j وElasticsearch وpgvector بدلًا من الاسترجاع الحالي المؤقت في الذاكرة." } },
-  { icon: Cpu, en: { t: "Real job-queue automation", d: "Celery + Redis wiring Module 09's toggles to actual scheduled work, not just local state." },
-    ar: { t: "أتمتة حقيقية بطابور مهام", d: "Celery + Redis لربط مفاتيح الوحدة 09 بعمل مجدول فعلي لا مجرد حالة محلية." } },
-  { icon: Rocket, en: { t: "Native mobile app", d: "A Flutter app for chat, document scanning, voice notes, alerts, and on-the-go workflow approvals." },
-    ar: { t: "تطبيق جوال أصلي", d: "تطبيق Flutter للدردشة ومسح المستندات والملاحظات الصوتية والتنبيهات واعتماد سير العمل أثناء التنقل." } },
-  { icon: Map, en: { t: "Cloud-native MLOps", d: "Kubernetes, MLflow, and GitHub Actions on AWS, replacing single-host Docker Compose for scale." },
-    ar: { t: "عمليات تعلّم آلي سحابية أصلية", d: "Kubernetes وMLflow وGitHub Actions على AWS بدلًا من Docker Compose أحادي المضيف." } },
+  { icon: Layers, en: { t: "Pixel-level vision", d: "Object detection and segmentation models running on-device alongside today's free-form image understanding." },
+    ar: { t: "رؤية على مستوى البكسل", d: "نماذج كشف وتجزئة للعناصر تعمل على الجهاز إلى جانب فهم الصور الحالي." } },
+  { icon: Bot, en: { t: "Multi-step agents", d: "Agents that plan, call OmniCore's own tools (search, scoring, documents) and check their work before answering." },
+    ar: { t: "وكلاء متعددو الخطوات", d: "وكلاء يخططون ويستدعون أدوات أومنيكور (البحث والتقييم والمستندات) ويراجعون عملهم قبل الإجابة." } },
+  { icon: Server, en: { t: "Semantic search", d: "On-device embeddings so search and chat find meaning, not just matching words." },
+    ar: { t: "بحث دلالي", d: "تضمينات على الجهاز ليجد البحث والدردشة المعنى لا الكلمات المتطابقة فقط." } },
+  { icon: Cpu, en: { t: "Encrypted sync", d: "Optional end-to-end encrypted sync so a workspace can follow you between devices." },
+    ar: { t: "مزامنة مشفرة", d: "مزامنة اختيارية مشفرة من طرف إلى طرف لتنتقل مساحة العمل معك بين الأجهزة." } },
+  { icon: Rocket, en: { t: "Offline-first mobile", d: "Install to the home screen and keep working without a connection once models are cached." },
+    ar: { t: "جوال يعمل دون اتصال", d: "ثبّته على الشاشة الرئيسية وواصل العمل دون اتصال بعد حفظ النماذج." } },
+  { icon: Map, en: { t: "More official sources", d: "Additional government APIs for trade and regulatory retrieval as they open up to browsers." },
+    ar: { t: "مصادر رسمية أكثر", d: "واجهات حكومية إضافية للاسترجاع التجاري والتنظيمي حالما تصبح متاحة للمتصفحات." } },
 ];
 
 function statusTone(status) {
@@ -332,7 +323,8 @@ function HeroVisual({ dir }) {
         }}
       >
         <img
-          src="https://images.unsplash.com/photo-1758691736483-5f600b509962?fm=jpg&q=85&w=1600&fit=crop"
+          src="https://images.unsplash.com/photo-1758691736483-5f600b509962?fm=jpg&q=80&w=1200&fit=crop"
+          fetchpriority="high"
           alt="An analyst presenting performance charts on a large screen to colleagues in a daylit meeting room"
           decoding="async"
           onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
@@ -427,6 +419,14 @@ export default function LandingPage({ lang, setLang, onGetStarted }) {
             }}>
               <Globe size={13} aria-hidden="true" /> <span lang={lang === "en" ? "ar" : "en"}>{lang === "en" ? "العربية" : "English"}</span>
             </button>
+            <InstallButton lang={lang} render={({ label, icon: Icon, onClick }) => (
+              <button onClick={onClick} className="oc-focusable" style={{
+                display: "flex", alignItems: "center", gap: 6, background: "var(--paper)", border: "1px solid var(--border)",
+                borderRadius: 99, padding: "9px 14px", minHeight: 36, fontSize: 12.5, fontWeight: 700, cursor: "pointer", color: "var(--maroon)",
+              }}>
+                <Icon size={13} aria-hidden="true" /> <span className="oc-install-label">{label}</span>
+              </button>
+            )} />
             <button onClick={onGetStarted} className="oc-focusable oc-desktop-nav" style={{
               display: "inline-flex", alignItems: "center", gap: 6, background: "var(--maroon)", color: "#fff",
               border: "none", borderRadius: 10, padding: "9px 16px", fontSize: 13.5, fontWeight: 700, cursor: "pointer",
@@ -470,20 +470,20 @@ export default function LandingPage({ lang, setLang, onGetStarted }) {
         <div style={{ position: "relative", maxWidth: 1160, margin: "0 auto", padding: "64px 24px 40px" }}>
         <div className="oc-hero-grid" style={{ display: "grid", gridTemplateColumns: "0.92fr 1.08fr", gap: 40, alignItems: "center" }}>
           <div>
-            <BlurFade delay={0}>
+            <div className="oc-fade-up" style={{ animationDelay: "0.00s" }}>
               <AnimatedGradientText className="!mx-0 !rounded-full !py-1.5 !px-3 mb-[18px] font-bold !text-[12px]">
                 <span className="inline-flex items-center gap-1.5"><Sparkles size={12} /> {t.hero.eyebrow}</span>
               </AnimatedGradientText>
-            </BlurFade>
-            <BlurFade delay={0.08}>
+            </div>
+            <div className="oc-fade-up" style={{ animationDelay: "0.04s" }}>
               <h1 className="oc-display" style={{ fontSize: "clamp(32px, 4.4vw, 50px)", fontWeight: 700, lineHeight: 1.12, color: "var(--maroon)", margin: 0 }}>
                 {t.hero.titleA} <span style={{ color: "var(--red)" }}>{t.hero.titleHighlight}</span> {t.hero.titleB}
               </h1>
-            </BlurFade>
-            <BlurFade delay={0.16}>
+            </div>
+            <div className="oc-fade-up" style={{ animationDelay: "0.08s" }}>
               <p style={{ fontSize: 16.5, lineHeight: 1.65, color: "var(--ink-soft)", marginTop: 20, maxWidth: 560 }}>{t.hero.sub}</p>
-            </BlurFade>
-            <BlurFade delay={0.24}>
+            </div>
+            <div className="oc-fade-up" style={{ animationDelay: "0.12s" }}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 30 }}>
                 <ShimmerButton onClick={onGetStarted} className="oc-focusable !text-[15px] shadow-[0_10px_24px_rgba(200,30,51,0.28)]">
                   <span className="inline-flex items-center gap-2">{t.hero.ctaPrimary} <ArrowUpRight size={16} /></span>
@@ -495,8 +495,8 @@ export default function LandingPage({ lang, setLang, onGetStarted }) {
                   {t.hero.ctaSecondary}
                 </a>
               </div>
-            </BlurFade>
-            <BlurFade delay={0.32}>
+            </div>
+            <div className="oc-fade-up" style={{ animationDelay: "0.16s" }}>
               {/* Counts are derived from MODULE_INFO, the same registry that
                   drives the status badges further down the page — so this can
                   never drift out of sync with what the module cards claim. */}
@@ -513,16 +513,16 @@ export default function LandingPage({ lang, setLang, onGetStarted }) {
                 </span>
                 <span style={{ fontSize: 13, color: "var(--ink-faint)" }}>
                   <strong className="oc-mono" style={{ color: "var(--maroon)", fontWeight: 700 }}>
-                    <NumberTicker value={MODULE_INFO.length} delay={0.4} />
+                    0
                   </strong>{" "}{t.hero.modulesTotal}
                 </span>
               </div>
-            </BlurFade>
+            </div>
           </div>
           <div className="oc-hero-visual">
-            <BlurFade delay={0.12}>
+            <div className="oc-fade-up" style={{ animationDelay: "0.06s" }}>
               <HeroVisual dir={dir} />
-            </BlurFade>
+            </div>
           </div>
         </div>
         </div>
@@ -723,7 +723,7 @@ export default function LandingPage({ lang, setLang, onGetStarted }) {
                 >
                   {/* Duration goes through `style`, not a className: Tailwind's
                       JIT scans source statically and cannot generate a class
-                      from a runtime template string like [--duration:${dur}]. */}
+                      from a runtime template string. */}
                   <Marquee pauseOnHover reverse={row.reverse} className="!p-0" style={{ "--gap": "1.6rem", "--duration": row.dur }}>
                     {row.items.map((tech) => (
                       <span key={tech} className="oc-mono" style={{

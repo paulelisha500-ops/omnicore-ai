@@ -2,25 +2,35 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>OmniCore AI</title>
-    <meta
-      name="description"
-      content="OmniCore AI — an enterprise multimodal AI platform with a self-hosted model, a real trained churn model, cited trade-law retrieval, and every module honestly labeled live or sample."
-    />
-    <!-- Fonts as <link>, not a runtime CSS @import: the browser discovers them
-         while parsing this file instead of after the JS bundle runs, and the
-         preconnects overlap the TLS handshakes. display=swap keeps text visible
-         in the fallback font if fonts.googleapis.com is slow or blocked. -->
+    <meta name="description" content="OmniCore AI — an enterprise multimodal AI workspace: chat, documents, vision, speech, agents, churn prediction, search and automation. Open it and it works — free, nothing to install, no API key." />
+    <meta name="theme-color" content="#FBF1E4" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="OmniCore" />
+    <meta property="og:title" content="OmniCore AI" />
+    <meta property="og:description" content="Enterprise AI workspace — open it and it works. Free, nothing to install, no API key." />
+    <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <!-- Fonts as <link>, not a CSS @import, so they download in parallel with
+         the bundle. display=swap keeps text visible if the font CDN is slow. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-    />
+    <!-- Non-blocking: the page paints immediately with system fonts, then swaps. -->
+    <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" />
+    <style>
+      html, body { margin: 0; background: #FBF1E4; }
+      @media (prefers-color-scheme: dark) { html, body { background: #0A0C0F; } }
+      #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+      #boot div { width: 44px; height: 44px; border-radius: 13px; background: linear-gradient(135deg, #3A0A10, #C81E33); animation: p 1.2s ease-in-out infinite; }
+      @keyframes p { 50% { transform: scale(.88); opacity: .7 } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div id="boot" aria-label="Loading"><div></div></div></div>
     <noscript>
       <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 15vh auto; padding: 0 20px; text-align: center; line-height: 1.6">
         <h1 style="font-size: 20px">OmniCore AI needs JavaScript</h1>
