@@ -43,10 +43,10 @@ const AGENTS = [
 ];
 
 const T = {
-  en: { eyebrow: "Module 05", title: "AI Agent Platform", desc: "Eight specialised agents running on your device. Research pulls live sources, the Data Analyst profiles your real CSV, and Reporting reads your actual workspace.",
+  en: { eyebrow: "Module 05", title: "AI Agent Platform", desc: "Eight specialised agents. Research pulls live sources, the Data Analyst profiles your real CSV, and Reporting reads your actual workspace.",
     runs: "runs", never: "Not run yet", last: "Last run", run: "Run agent", running: "Working", attach: "Attach CSV", profile: "Data profile ready", save: "Save to knowledge base", saved: "Saved",
     history: "Previous runs", noRuns: "No runs yet.", gathering: "Gathering sources", err: "Error: " },
-  ar: { eyebrow: "الوحدة 05", title: "منصة الوكلاء الأذكياء", desc: "ثمانية وكلاء متخصصين يعملون على جهازك. وكيل البحث يجلب مصادر حية، ومحلل البيانات يدرس ملف CSV الحقيقي، ووكيل التقارير يقرأ مساحة عملك الفعلية.",
+  ar: { eyebrow: "الوحدة 05", title: "منصة الوكلاء الأذكياء", desc: "ثمانية وكلاء متخصصين. وكيل البحث يجلب مصادر حية، ومحلل البيانات يدرس ملف CSV الحقيقي، ووكيل التقارير يقرأ مساحة عملك الفعلية.",
     runs: "تشغيلات", never: "لم يُشغَّل بعد", last: "آخر تشغيل", run: "تشغيل الوكيل", running: "جارٍ العمل", attach: "إرفاق CSV", profile: "ملف تعريف البيانات جاهز", save: "حفظ في قاعدة المعرفة", saved: "تم الحفظ",
     history: "التشغيلات السابقة", noRuns: "لا تشغيلات بعد.", gathering: "جارٍ جمع المصادر", err: "خطأ: " },
 };

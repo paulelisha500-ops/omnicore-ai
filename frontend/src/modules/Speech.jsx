@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Mic, StopCircle, Upload, Sparkles, Volume2, Pause, Play, Square, Download, BookMarked, Trash2, FileAudio, Radio, ShieldCheck, History, CheckCircle2 } from "lucide-react";
 import { Card, CardTitle, SectionHeader, ModuleShell, Button, Badge, Notice, EmptyState, SkeletonLines, Segmented, Field, Markdown, Sheet, toast } from "../ui.jsx";
 import { addDoc, addRecord, deleteRecord, useRecords, logEvent, errText, timeAgo, download } from "../lib/data.js";
-import { generate, transcribe, stopGenerating, useAI, progressOf } from "../lib/ai.js";
+import { generate, transcribe, stopGenerating, useAI, progressOf, getAIState } from "../lib/ai.js";
 import { decodeTo16k, startRecorder, hasWebSpeech } from "../lib/audio.js";
 import { wordCount } from "../lib/docs.js";
 
@@ -53,7 +53,8 @@ const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padSt
 export default function Speech({ lang, user }) {
   const t = T[lang];
   const ai = useAI();
-  const [engine, setEngine] = useState("whisper");
+  // Online mode favours zero downloads: use the browser's live captions when available.
+  const [engine, setEngine] = useState(() => (getAIState().engine === "cloud" && hasWebSpeech() ? "live" : "whisper"));
   const [transcript, setTranscript] = useState("");
   const [interim, setInterim] = useState("");
   const [recording, setRecording] = useState(false);

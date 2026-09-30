@@ -10,6 +10,9 @@ import { restoreSession, signOut as authSignOut } from "./lib/auth.js";
 import { requestPersistence } from "./lib/db.js";
 import { useOwned, markAllRead, clearNotifications, timeAgo, logEvent } from "./lib/data.js";
 import { useAI, acceptConsent, declineConsent, warmIfCached, MODELS, ASR_MODEL, fmtMB, fmtBytes, progressOf, sizeOf, loadingName } from "./lib/ai.js";
+import InstallButton from "./InstallButton.jsx";
+import { completeSignInIfPresent, signInWithHF, signInAvailable, useHFSession, SPACE_APP_URL } from "./lib/hfauth.js";
+import { setEngine, closeSigninPrompt, openSigninPrompt } from "./lib/ai.js";
 import { startEngine } from "./lib/automation.js";
 import { on } from "./lib/bus.js";
 
@@ -121,7 +124,10 @@ export default function App() {
   }, [theme, user]);
 
   useEffect(() => {
-    restoreSession()
+    // Finish a "Sign in with Hugging Face" round-trip first (it returns here with ?code=…).
+    completeSignInIfPresent()
+      .catch(() => null)
+      .then(() => restoreSession())
       .then(({ user: u, expired }) => {
         if (u) setUser(u);
         else if (expired) { setAuthNotice(lang === "ar" ? "انتهت جلستك. سجّل الدخول مرة أخرى." : "Your session expired. Please sign in again."); setScreen("auth"); }
@@ -217,6 +223,9 @@ function Shell({ lang, setLang, theme, themePref, setTheme, user, setUser, onSig
               borderRadius: 99, padding: "6px 12px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
               <Globe size={13} /> {lang === "en" ? "العربية" : "English"}
             </button>
+            <InstallButton lang={lang} render={({ label, icon, onClick }) => (
+              <span className="oc-hide-sm"><Button size="sm" variant="ghost" icon={icon} onClick={onClick}>{label}</Button></span>
+            )} />
             <NotifButton lang={lang} user={user} onOpen={() => setNotifOpen(true)} />
             <AvatarMenu lang={lang} user={user} go={go} onSignOut={onSignOut} />
           </header>
@@ -235,6 +244,7 @@ function Shell({ lang, setLang, theme, themePref, setTheme, user, setUser, onSig
       <TabBar lang={lang} route={route} go={go} openMore={() => setMobileOpen(true)} />
       <NotificationsSheet lang={lang} user={user} open={notifOpen} onClose={() => setNotifOpen(false)} go={go} />
       <AIConsentSheet lang={lang} />
+      <SignInSheet lang={lang} />
       <DownloadPill lang={lang} />
       <Toaster />
     </div>
@@ -252,6 +262,7 @@ function AdminOnly({ lang }) {
 
 function Sidebar({ lang, route, go, collapsed, mobileOpen, setMobileOpen, isAdmin }) {
   const c = commonText[lang];
+  const ai = useAI();
   return (
     <>
       <div className={`oc-sidebar-backdrop ${mobileOpen ? "show" : ""}`} onClick={() => setMobileOpen(false)} />
@@ -293,7 +304,9 @@ function Sidebar({ lang, route, go, collapsed, mobileOpen, setMobileOpen, isAdmi
         {!collapsed && (
           <div style={{ padding: 14, borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 7, color: "var(--rail-ink-dim)", fontSize: 11.5, lineHeight: 1.4 }}>
             <Cpu size={13} color="#E6A83F" style={{ flexShrink: 0 }} />
-            {lang === "ar" ? "الذكاء الاصطناعي يعمل على جهازك — بياناتك لا تغادره" : "AI runs on your device — your data never leaves it"}
+            {ai.engine === "cloud"
+              ? (lang === "ar" ? "ذكاء اصطناعي فوري عبر الإنترنت — بلا تنزيل" : "Instant online AI — nothing to download")
+              : (lang === "ar" ? "الذكاء الاصطناعي يعمل على جهازك — خاص بالكامل" : "AI runs on your device — fully private")}
           </div>
         )}
       </aside>
@@ -324,18 +337,22 @@ function TabBar({ lang, route, go, openMore }) {
 
 function AIStatusPill({ lang, go }) {
   const ai = useAI();
+  const hf = useHFSession();
   const ar = lang === "ar";
   let label, tone = "neutral", icon = Cpu;
+  const needsSignIn = ai.engine === "cloud" && !hf;
   if (ai.loadingKey) {
     const p = progressOf(ai);
     label = p != null && ai.loaded ? `${Math.round(p * 100)}%` : (ar ? "جارٍ التحميل" : "Loading");
     tone = "spark"; icon = Download;
   } else if (ai.busy) { label = ar ? "يفكّر…" : "Thinking…"; tone = "spark"; icon = Sparkles; }
+  else if (needsSignIn) { label = ar ? "سجّل الدخول للذكاء الاصطناعي" : "Sign in for AI"; tone = "spark"; icon = Sparkles; }
+  else if (ai.engine === "cloud") { label = ar ? "ذكاء عبر الإنترنت" : "Online AI"; tone = "success"; icon = Globe; }
   else if (ai.phase === "ready") { label = ai.device === "webgpu" ? "WebGPU" : "CPU"; tone = "success"; icon = Gauge; }
   else if (ai.phase === "error") { label = ar ? "خطأ" : "AI error"; tone = "danger"; icon = AlertTriangle; }
   else { label = ar ? "الذكاء المحلي" : "On-device AI"; }
   return (
-    <button onClick={() => go("settings")} className="oc-press oc-focusable oc-hide-sm" title={ar ? "محرك الذكاء الاصطناعي" : "AI engine"}
+    <button onClick={() => (needsSignIn ? openSigninPrompt() : go("settings"))} className="oc-press oc-focusable oc-hide-sm" title={ar ? "محرك الذكاء الاصطناعي" : "AI engine"}
       style={{ border: "none", background: "none", padding: 0, cursor: "pointer" }}>
       <Badge tone={tone} icon={ai.busy && !ai.loadingKey ? Loader2 : icon}>{label}</Badge>
     </button>
@@ -457,6 +474,38 @@ function AIConsentSheet({ lang }) {
     </Sheet>
   );
 }
+/* Shown when an AI feature needs the online engine and nobody is signed in. */
+function SignInSheet({ lang }) {
+  const ai = useAI();
+  const ar = lang === "ar";
+  const available = signInAvailable();
+  const [busy, setBusy] = useState(false);
+  return (
+    <Sheet open={ai.signinPrompt} onClose={closeSigninPrompt} title={ar ? "استخدم الذكاء الاصطناعي عبر الإنترنت" : "Use AI online — nothing to download"}
+      footer={<>
+        <Button variant="ghost" onClick={() => { setEngine("local"); closeSigninPrompt(); }}>{ar ? "استخدم الذكاء على الجهاز بدلًا من ذلك" : "Use on-device AI instead"}</Button>
+        {available
+          ? <Button variant="accent" loading={busy} onClick={() => { setBusy(true); signInWithHF().catch(() => setBusy(false)); }}>{ar ? "تسجيل الدخول عبر Hugging Face" : "Sign in with Hugging Face"}</Button>
+          : <a href={SPACE_APP_URL} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}><Button variant="accent">{ar ? "افتح أومنيكور على Hugging Face" : "Open OmniCore on Hugging Face"}</Button></a>}
+      </>}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: 14, lineHeight: 1.6, color: "var(--ink-soft)" }}>
+        <p style={{ margin: 0 }}>
+          {available
+            ? (ar ? "سجّل الدخول بحساب Hugging Face المجاني مرة واحدة. يعمل الذكاء الاصطناعي على خوادم Hugging Face باستخدام الرصيد الشهري المجاني لحسابك — لا تنزيل ولا مفتاح API."
+                  : "Sign in once with your free Hugging Face account. The AI then runs on Hugging Face's servers using your account's free monthly credit — no download, no API key.")
+            : (ar ? "تسجيل الدخول عبر Hugging Face متاح في نسخة أومنيكور المستضافة على Hugging Face. افتحها هناك، أو استخدم الذكاء الاصطناعي على جهازك هنا."
+                  : "Sign-in with Hugging Face is available on the Hugging Face–hosted OmniCore. Open it there, or use the on-device AI here.")}
+        </p>
+        <div style={{ display: "grid", gap: 8 }}>
+          <Row icon={Sparkles} text={ar ? "GPT-OSS 20B للنصوص وQwen3-VL للصور — إجابات خلال ثانية تقريبًا." : "GPT-OSS 20B for text and Qwen3-VL for images — answers in about a second."} />
+          <Row icon={ShieldCheck} text={ar ? "يبقى الرمز في هذا المتصفح فقط، ويمكنك تسجيل الخروج من الإعدادات في أي وقت." : "Your sign-in token stays in this browser only. Sign out any time in Settings."} />
+          <Row icon={Cpu} text={ar ? "تفضّل خصوصية كاملة؟ الذكاء على الجهاز يعمل دون اتصال بعد تنزيل لمرة واحدة." : "Prefer full privacy? On-device AI works offline after a one-time download."} />
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
 const Row = ({ icon: I, text }) => (
   <div style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--surface-sunken)", borderRadius: 12, padding: "9px 11px", fontSize: 13.5, color: "var(--ink)" }}>
     <I size={16} color="var(--accent)" style={{ flexShrink: 0, marginTop: 2 }} /> <span>{text}</span>

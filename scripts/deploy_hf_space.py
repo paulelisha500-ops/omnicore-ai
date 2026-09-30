@@ -22,22 +22,32 @@ colorTo: indigo
 sdk: static
 app_file: index.html
 pinned: true
-short_description: Enterprise AI workspace that runs entirely in your browser
+header: mini
+fullWidth: true
+hf_oauth: true
+hf_oauth_scopes:
+  - inference-api
+hf_oauth_expiration_minutes: 43200
+short_description: Enterprise AI workspace — instant, free, installable
 tags:
   - transformers.js
   - webgpu
-  - on-device
+  - pwa
   - qwen3
   - whisper
 ---
 
 # OmniCore AI
 
-An enterprise multimodal AI workspace that runs **entirely in your browser** —
-chat, document intelligence, computer vision, speech, agents, churn prediction,
-search, automation and trade-regulation research. The AI models (Qwen3, Qwen3.5,
-Whisper) run on your own device with WebGPU; nothing you type or upload is sent
-to a server.
+An enterprise multimodal AI workspace — chat, document intelligence, computer
+vision, speech, agents, churn prediction, search, automation and
+trade-regulation research. **Nothing to download:** sign in once with your
+free Hugging Face account and the AI (GPT-OSS 20B for text, Qwen3-VL for
+images) runs on Hugging Face's servers — no API key. Or switch to a fully
+private mode where open models (Qwen3, Qwen3.5, Whisper) run on your device.
+Installable as an app. Your workspace lives in your browser, never on a server.
+
+Full-screen app: https://elisha622-omnicore-ai.static.hf.space
 
 Source code: https://github.com/paulelisha500-ops/omnicore-ai
 """

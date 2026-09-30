@@ -1,7 +1,14 @@
 /* ============================================================================
-   Main-thread client for the on-device AI worker.
+   AI client.
 
-   Two model roles:
+   Two engines:
+     • ONLINE (default) — Hugging Face Inference Providers after "Sign in with
+       Hugging Face" (lib/cloud.js). GPT-OSS 20B for text, Qwen3-VL for images.
+       Nothing to download.
+     • ON-DEVICE — open models in a Web Worker (Transformers.js). Private and
+       works offline, after a one-time download.
+
+   On-device model roles:
      • the TEXT model answers every text task (chat, summaries, agents…);
      • the VISION model reads images. If the chosen text model is itself
        multimodal (Qwen3.5), it serves both roles and nothing extra downloads.
@@ -10,6 +17,9 @@
    <AIConsentSheet/>), then loads from the browser cache on later visits.
    ============================================================================ */
 import { useSyncExternalStore } from "react";
+import { cloudGenerate, stopCloud, CLOUD } from "./cloud.js";
+
+export { CLOUD };
 
 export const MODELS = {
   "qwen3-0.6b": {
@@ -35,6 +45,10 @@ export const VISION_DEFAULT = "qwen3.5-0.8b";
 export const ASR_MODEL = { id: "onnx-community/whisper-base", name: "Whisper base", size: { gpu: 210, cpu: 81 } };
 
 const MODEL_KEY = "omnicore_ai_model";
+const ENGINE_KEY = "omnicore_ai_engine";
+export function getEngine() {
+  try { return localStorage.getItem(ENGINE_KEY) === "local" ? "local" : "cloud"; } catch { return "cloud"; }
+}
 const consentKey = (k) => (k === "asr" ? "omnicore_asr_consent" : `omnicore_consent_${k}`);
 const cachedKey = (k) => (k === "asr" ? "omnicore_asr_cached" : `omnicore_ai_cached_${k}`);
 
@@ -48,6 +62,7 @@ export const visionKeyFor = (textKey) => (MODELS[textKey]?.kind === "vlm" ? text
    Observable status
    --------------------------------------------------------------------------- */
 let state = {
+  engine: getEngine(),      // cloud | local
   modelKey: getModelKey(),
   models: {},               // key -> idle | loading | ready | error
   phase: "idle",            // derived for the text model: idle | consent | loading | ready | error
@@ -59,11 +74,13 @@ let state = {
   busy: 0,
   asrReady: false,
   lastStats: null,
+  signinPrompt: false,      // true → the "Sign in with Hugging Face" sheet is shown
 };
 const subs = new Set();
 function derivePhase(s) {
   if (s.consentFor) return "consent";
   if (s.loadingKey && s.loadingKey !== "asr") return "loading";
+  if (s.engine === "cloud") return "ready";
   const m = s.models[s.modelKey];
   return m === "ready" ? "ready" : m === "error" ? "error" : "idle";
 }
@@ -187,7 +204,14 @@ export function ensureModel(key) {
   return inflight[key];
 }
 
-export const ensureReady = () => ensureModel(state.modelKey);
+export const ensureReady = () => (state.engine === "cloud" ? Promise.resolve() : ensureModel(state.modelKey));
+
+export function setEngine(engine) {
+  const e = engine === "local" ? "local" : "cloud";
+  try { localStorage.setItem(ENGINE_KEY, e); } catch { /* private mode */ }
+  set({ engine: e, error: null });
+  if (e === "local") warmIfCached();
+}
 export const isModelCached = (k = state.modelKey) => localStorage.getItem(cachedKey(k)) === "1";
 
 /** True only if the model's weight files are really in Cache Storage (a full
@@ -208,7 +232,7 @@ async function weightsInCache(key) {
     cached, so this never starts a large download without the user asking. */
 export function warmIfCached() {
   const k = state.modelKey;
-  if (state.models[k] || !hasConsent(k) || !isModelCached(k)) return;
+  if (state.engine !== "local" || state.models[k] || !hasConsent(k) || !isModelCached(k)) return;
   const idle = window.requestIdleCallback || ((f) => setTimeout(f, 1500));
   idle(async () => {
     if (await weightsInCache(k)) ensureModel(k).catch(() => {});
@@ -253,7 +277,31 @@ export async function modelCacheSize() {
 /* ---------------------------------------------------------------------------
    Generation
    --------------------------------------------------------------------------- */
+export const closeSigninPrompt = () => set({ signinPrompt: false });
+export const openSigninPrompt = () => set({ signinPrompt: true });
+
 export async function generate({ system, messages, prompt, images = [], maxTokens = 512, temperature = 0.7, onToken, imageMaxSide }) {
+  if (state.engine === "cloud") {
+    const msgs = messages || [{ role: "user", content: prompt }];
+    set({ busy: state.busy + 1 });
+    const started = performance.now();
+    let first = 0, pieces = 0;
+    try {
+      const text = await cloudGenerate({
+        system, messages: msgs, images, maxTokens: Math.max(maxTokens, 256), temperature,
+        onToken: (t) => { if (!first) first = performance.now(); pieces++; onToken?.(t); },
+      });
+      const end = performance.now();
+      set({ lastStats: { tokens: pieces, seconds: (end - started) / 1000, tps: pieces > 1 && first ? (pieces - 1) / ((end - first) / 1000) : 0,
+        firstTokenMs: first ? first - started : null, device: "cloud", model: images.length ? CLOUD.visionName : CLOUD.name } });
+      return text;
+    } catch (e) {
+      if (e.code === "NEEDS_SIGNIN") set({ signinPrompt: true });
+      throw e;
+    } finally {
+      set({ busy: Math.max(0, state.busy - 1) });
+    }
+  }
   const key = images.length ? visionKeyFor(state.modelKey) : state.modelKey;
   await ensureModel(key);
   const msgs = messages || [{ role: "user", content: prompt }];
@@ -270,6 +318,7 @@ export async function generate({ system, messages, prompt, images = [], maxToken
 }
 
 export function stopGenerating() {
+  stopCloud();
   worker?.postMessage({ type: "interrupt" });
 }
 
@@ -280,6 +329,15 @@ export function stopGenerating() {
 export async function generateJSON(opts, fallback) {
   const raw = await generate({ temperature: 0.2, ...opts });
   return parseJSONLoose(raw) ?? fallback(raw);
+}
+
+/** Read the text in an image with the active engine's vision model. */
+export async function readImageText(blob, { lang = "en", onToken } = {}) {
+  return generate({
+    system: "You transcribe documents. Output only the text visible in the image, preserving line breaks. No commentary.",
+    prompt: lang === "ar" ? "انسخ كل النص الظاهر في هذه الصورة كما هو." : "Transcribe all text in this image exactly.",
+    images: [blob], maxTokens: 900, temperature: 0, imageMaxSide: 1024, onToken,
+  });
 }
 
 export function parseJSONLoose(raw) {

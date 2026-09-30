@@ -4,14 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>OmniCore AI</title>
-    <meta name="description" content="OmniCore AI — an enterprise multimodal AI workspace that runs entirely in your browser: on-device chat, documents, vision, speech, agents, churn prediction, search and automation. No servers, no API keys." />
+    <meta name="description" content="OmniCore AI — an enterprise multimodal AI workspace: chat, documents, vision, speech, agents, churn prediction, search and automation. Open it and it works — free, nothing to install, no API key." />
     <meta name="theme-color" content="#FBF1E4" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="OmniCore" />
     <meta property="og:title" content="OmniCore AI" />
-    <meta property="og:description" content="Enterprise AI that runs in your browser — private, free, no servers." />
+    <meta property="og:description" content="Enterprise AI workspace — open it and it works. Free, nothing to install, no API key." />
     <link rel="icon" type="image/svg+xml" href="./icon.svg" />
     <link rel="apple-touch-icon" href="./icon-192.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
@@ -19,7 +19,8 @@
          the bundle. display=swap keeps text visible if the font CDN is slow. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" />
+    <!-- Non-blocking: the page paints immediately with system fonts, then swaps. -->
+    <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" />
     <style>
       html, body { margin: 0; background: #FBF1E4; }
       @media (prefers-color-scheme: dark) { html, body { background: #0A0C0F; } }

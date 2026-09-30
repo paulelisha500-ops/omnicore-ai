@@ -1,11 +1,11 @@
 # OmniCore AI
 
-An enterprise multimodal AI workspace that runs **entirely in your browser**.
-Chat, document intelligence, computer vision, speech, AI agents, churn
-prediction, enterprise search, automation, integrations and trade-regulation
-research — with **no server, no Docker, no API keys**. The AI models run on
-your own device (WebGPU, or the CPU as a fallback), and your data stays in your
-browser.
+An enterprise multimodal AI workspace — chat, document intelligence, computer
+vision, speech, AI agents, churn prediction, enterprise search, automation,
+integrations and trade-regulation research. **Open it and it works:** no
+server to run, no Docker, no model download, no API key. Sign in once with a
+free Hugging Face account and the AI runs on Hugging Face's servers, or switch
+to a fully private on-device mode. Installable as an app.
 
 **Live app**
 
@@ -35,25 +35,29 @@ and has light and dark themes.
 
 ## How it works
 
-- **AI on your device.** [Transformers.js](https://huggingface.co/docs/transformers.js)
-  runs ONNX models in a Web Worker: **Qwen3 0.6B** for text (fastest),
-  **Qwen3.5** for images (downloaded the first time you analyze one) and
-  **Whisper base** for speech. Each model asks before downloading, then loads
-  from the browser cache. You can switch to Qwen3.5 0.8B or 2B for better
-  answers in Settings → AI engine, which also has a speed test.
+- **Online AI (default).** "Sign in with Hugging Face" (OAuth on the Space,
+  `inference-api` scope) gives the app a token for
+  [Inference Providers](https://huggingface.co/docs/inference-providers):
+  **GPT-OSS 20B** for text and **Qwen3-VL 30B** for images, answering in about
+  a second. Usage is billed to each visitor's own Hugging Face account, whose
+  free monthly credit covers everyday use. Nothing downloads.
+- **On-device AI (optional, private).** Settings → AI engine → On this
+  device: [Transformers.js](https://huggingface.co/docs/transformers.js) runs
+  Qwen3 0.6B (text), Qwen3.5 (images) and Whisper (speech) in a Web Worker
+  with WebGPU, after a one-time download. Nothing you type leaves the device.
 - **Your data stays local.** Accounts, documents, chats, automations and
   history live in the browser's IndexedDB. Export/import/erase are in Settings.
-- **Only opt-in lookups leave the device:** search words sent to Wikipedia or
-  official government APIs, and messages you route to your own integrations.
+- **Installable app.** It's a Progressive Web App: use "Install app" in the
+  top bar (or Share → Add to Home Screen on iPhone).
 - **Real churn model.** `ml/export_churn_model.py` exports the trained
   scikit-learn pipeline to `frontend/public/models/churn-forest.json`; the
   browser evaluator matches scikit-learn's `predict_proba` to within 1e-6.
 
 ### Requirements
 
-A current Chrome, Edge, Safari or Firefox. A GPU with WebGPU gives the best
-speed; without it, models run on the CPU (slower, but they work). The first AI
-use downloads about 590 MB; later visits load from cache.
+Any current browser. Online AI needs a free Hugging Face account (one-click
+sign-in) and works on the Hugging Face–hosted app. On-device AI is fastest
+with a WebGPU-capable GPU.
 
 ## Run it locally
 

@@ -3,26 +3,26 @@ import { Camera, Upload, Sparkles, ScanText, MessageCircleQuestion, Eye, Trash2,
 import { Card, CardTitle, SectionHeader, ModuleShell, Button, Badge, Markdown, Notice, EmptyState, SkeletonLines, Segmented, Sheet, useCopy } from "../ui.jsx";
 import { addRecord, deleteRecord, useRecords, logEvent, errText, timeAgo } from "../lib/data.js";
 import { downscale } from "../lib/docs.js";
-import { generate, stopGenerating } from "../lib/ai.js";
+import { generate, stopGenerating, readImageText, useAI } from "../lib/ai.js";
 
 const T = {
   en: {
     eyebrow: "Module 02", title: "Computer Vision",
-    desc: "Understand any image on-device: describe the scene and objects, read text in the image (multilingual), or ask your own question about it.",
+    desc: "Understand any image: describe the scene and objects, read text in the image (multilingual), or ask your own question about it.",
     drop: "Drop an image, paste one, or click to browse", camera: "Take photo",
     modes: { describe: "Describe", ocr: "Read text", ask: "Ask" }, askPh: "e.g. Is anyone wearing a safety helmet?",
     run: "Analyze image", running: "Looking at the image", scene: "Scene", objects: "Objects", text: "Text in image", notes: "Observations",
     history: "Analyzed images", noHistory: "Images you analyze appear here.", err: "Couldn't analyze: ", none: "None found",
-    note: "Free-form visual understanding by Qwen3.5 on your device. It describes what it sees; it doesn't draw pixel-level boxes.",
+    note: "Online: Qwen3-VL on Hugging Face reads the image. On-device mode: Qwen3.5 runs in your browser. It describes what it sees; it doesn't draw pixel-level boxes.",
   },
   ar: {
     eyebrow: "الوحدة 02", title: "الرؤية الحاسوبية",
-    desc: "افهم أي صورة على جهازك: صف المشهد والعناصر، اقرأ النص داخل الصورة (بعدة لغات)، أو اطرح سؤالك الخاص عنها.",
+    desc: "افهم أي صورة: صف المشهد والعناصر، اقرأ النص داخل الصورة (بعدة لغات)، أو اطرح سؤالك الخاص عنها.",
     drop: "أسقط صورة أو الصقها أو انقر للاختيار", camera: "التقط صورة",
     modes: { describe: "وصف", ocr: "قراءة النص", ask: "سؤال" }, askPh: "مثال: هل يرتدي أحد خوذة أمان؟",
     run: "تحليل الصورة", running: "جارٍ النظر في الصورة", scene: "المشهد", objects: "العناصر", text: "النص في الصورة", notes: "ملاحظات",
     history: "الصور المحلَّلة", noHistory: "تظهر هنا الصور التي تحللها.", err: "تعذّر التحليل: ", none: "لا يوجد",
-    note: "فهم بصري حر بواسطة Qwen3.5 على جهازك. يصف ما يراه؛ ولا يرسم صناديق على مستوى البكسل.",
+    note: "عبر الإنترنت: يقرأ Qwen3-VL الصورة على Hugging Face. على الجهاز: يعمل Qwen3.5 في متصفحك. يصف ما يراه؛ ولا يرسم صناديق على مستوى البكسل.",
   },
 };
 
@@ -85,11 +85,13 @@ export default function Vision({ lang, user }) {
       ask: question.trim() || (ar ? "صف الصورة." : "Describe the image."),
     };
     try {
-      const raw = await generate({
-        system: ar ? "أنت محرك رؤية حاسوبية دقيق. صف فقط ما تراه فعليًا." : "You are a precise computer-vision engine. Only describe what is actually visible.",
-        prompt: prompts[mode], images: [img.blob], maxTokens: mode === "ocr" ? 900 : 480, temperature: mode === "ocr" ? 0 : 0.4,
-        imageMaxSide: mode === "ocr" ? 1024 : 640, onToken: (tok) => setStream((s) => s + tok),
-      });
+      const raw = mode === "ocr"
+        ? (await readImageText(img.blob, { lang, onToken: (tok) => setStream((s) => s + tok) })) || (ar ? "لم يُعثر على نص مقروء." : "No readable text found.")
+        : await generate({
+          system: ar ? "أنت محرك رؤية حاسوبية دقيق. صف فقط ما تراه فعليًا." : "You are a precise computer-vision engine. Only describe what is actually visible.",
+          prompt: prompts[mode], images: [img.blob], maxTokens: 480, temperature: 0.4,
+          imageMaxSide: 640, onToken: (tok) => setStream((s) => s + tok),
+        });
       const res = mode === "describe" ? { mode, ...parseDescribe(raw), raw } : { mode, raw, question: mode === "ask" ? prompts.ask : "" };
       setResult(res);
       const small = await downscale(img.blob, 280);

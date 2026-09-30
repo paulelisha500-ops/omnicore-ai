@@ -295,7 +295,7 @@ export function AIInsightPanel({ lang, loading, text, onRegenerate, label, onSto
               : onRegenerate && <Button size="sm" variant="ghost" icon={RefreshCw} onClick={onRegenerate}>{actionLabel || (text ? (lang === "ar" ? "إعادة الإنشاء" : "Regenerate") : (lang === "ar" ? "إنشاء" : "Generate"))}</Button>}
           </div>
           <div style={{ marginTop: 10, fontSize: 14.5, lineHeight: 1.6 }}>
-            {loading && !text ? <SkeletonLines n={3} /> : text ? <Markdown text={text} streaming={streaming} /> : <span style={{ color: "var(--ink-faint)" }}>{lang === "ar" ? "اضغط «إنشاء» ليكتب النموذج على جهازك رؤية جديدة." : "Press Generate and the on-device model will write one."}</span>}
+            {loading && !text ? <SkeletonLines n={3} /> : text ? <Markdown text={text} streaming={streaming} /> : <span style={{ color: "var(--ink-faint)" }}>{lang === "ar" ? "اضغط «إنشاء» ليكتب الذكاء الاصطناعي رؤية جديدة." : "Press Generate and the AI will write one."}</span>}
           </div>
           {footer}
         </div>

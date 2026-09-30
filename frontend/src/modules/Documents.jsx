@@ -3,13 +3,13 @@ import { Upload, FileText, Sparkles, Send, BookMarked, CheckCircle2, Trash2, X, 
 import { Card, CardTitle, SectionHeader, ModuleShell, Button, Badge, Markdown, Notice, EmptyState, SkeletonLines, ProgressBar, toast } from "../ui.jsx";
 import { addDoc, addRecord, deleteRecord, useRecords, logEvent, errText, timeAgo } from "../lib/data.js";
 import { readFile, chunkText, wordCount, ACCEPT } from "../lib/docs.js";
-import { generate, stopGenerating } from "../lib/ai.js";
+import { generate, stopGenerating, readImageText } from "../lib/ai.js";
 import { rank } from "../lib/search.js";
 
 const T = {
   en: {
     eyebrow: "Module 03", title: "Document Intelligence",
-    desc: "Drop in a PDF, Word file, text, or a photo of a page. The on-device model reads it, summarizes it and answers your questions — the file never leaves this device.",
+    desc: "Drop in a PDF, Word file, text, or a photo of a page. OmniCore reads it in your browser, then the AI summarizes it and answers your questions. Your files are never uploaded or stored anywhere else.",
     drop: "Drop a file or click to browse", dropSub: "PDF · Word (.docx) · TXT · Markdown · CSV · HTML · images", paste: "Paste text instead",
     pastePh: "Paste document text here…", usePaste: "Use this text", analyze: "Analyze", analyzing: "Analyzing", reading: "Reading file…",
     ocr: "Reading the page image…", part: "Summarizing part", combine: "Combining",
@@ -20,7 +20,7 @@ const T = {
   },
   ar: {
     eyebrow: "الوحدة 03", title: "ذكاء المستندات",
-    desc: "أسقط ملف PDF أو Word أو نصًا أو صورة صفحة. يقرأه النموذج على جهازك ويلخّصه ويجيب عن أسئلتك — ولا يغادر الملف جهازك.",
+    desc: "أسقط ملف PDF أو Word أو نصًا أو صورة صفحة. يقرؤه أومنيكور في متصفحك، ثم يلخّصه الذكاء الاصطناعي ويجيب عن أسئلتك. لا تُرفع ملفاتك ولا تُخزَّن في أي مكان آخر.",
     drop: "أسقط ملفًا أو انقر للاختيار", dropSub: "PDF · Word (.docx) · TXT · Markdown · CSV · HTML · صور", paste: "الصق نصًا بدلًا من ذلك",
     pastePh: "الصق نص المستند هنا…", usePaste: "استخدم هذا النص", analyze: "تحليل", analyzing: "جارٍ التحليل", reading: "جارٍ قراءة الملف…",
     ocr: "جارٍ قراءة صورة الصفحة…", part: "تلخيص الجزء", combine: "جارٍ الدمج",
@@ -99,11 +99,7 @@ export default function Documents({ lang, user }) {
         setStatus(t.ocr);
         const pagesText = [];
         for (const img of doc.images) {
-          const tx = await generate({
-            system: "You transcribe documents. Output only the text visible in the image, preserving line breaks. No commentary.",
-            prompt: ar ? "انسخ كل النص الظاهر في هذه الصفحة كما هو." : "Transcribe all text on this page exactly.",
-            images: [img], maxTokens: 900, temperature: 0, imageMaxSide: 1024, onToken: (tok) => setStream((s) => s + tok),
-          });
+          const tx = await readImageText(img, { lang, onToken: (tok) => setStream((s) => s + tok) });
           pagesText.push(tx); setStream("");
         }
         text = pagesText.join("\n\n").trim();

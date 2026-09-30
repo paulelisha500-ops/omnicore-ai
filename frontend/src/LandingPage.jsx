@@ -9,6 +9,7 @@ import {
   NumberTicker, BlurFade, BorderBeam, ShimmerButton, AnimatedGradientText,
   DotPattern, Marquee, Ripple,
 } from "./magicui.jsx";
+import InstallButton from "./InstallButton.jsx";
 
 /* ============================================================================
    PRE-LOGIN THEME
@@ -79,6 +80,7 @@ export const PREAUTH_TOKENS = `
   .oc-preauth .oc-gallery-grid .oc-span-tall { grid-row: span 1; }
 }
 @media (max-width: 560px) {
+  .oc-preauth .oc-install-label { display: none; }
   .oc-preauth .oc-modules-grid { grid-template-columns: 1fr !important; }
   .oc-preauth .oc-gallery-grid { grid-template-columns: 1fr !important; }
   .oc-preauth .oc-gallery-grid .oc-span-wide, .oc-preauth .oc-gallery-grid .oc-span-full { grid-column: span 1 !important; }
@@ -95,14 +97,14 @@ const text = {
     hero: {
       eyebrow: "Enterprise Multimodal AI Operating System",
       titleA: "One AI core for how your", titleHighlight: "whole company", titleB: "actually works",
-      sub: "Chat, documents, vision, speech, agents, forecasting and automation — powered by AI models that run inside your browser. No servers, no API keys, no data leaving your device.",
+      sub: "Chat, documents, vision, speech, agents, forecasting and automation — open it and it works. Instant online AI with nothing to install, or a fully private mode that runs inside your browser.",
       ctaPrimary: "Get started — it's free", ctaSecondary: "Explore the modules",
-      liveNow: "modules, all working", modulesTotal: "servers to run — it's all in your browser",
+      liveNow: "modules, all working", modulesTotal: "installs or API keys needed",
     },
     trust: [
       { k: "84.5%", v: "Churn model ROC-AUC on real held-out customers" },
       { k: "7,043", v: "Real customer records behind the churn model" },
-      { k: "0", v: "Servers — AI runs on your own device" },
+      { k: "0", v: "Downloads needed — AI runs on Hugging Face" },
       { k: "2", v: "Languages, both first-class: English and Arabic" },
     ],
     modules: {
@@ -116,17 +118,17 @@ const text = {
       desc: "Today's build is complete and runs entirely in the browser. These are the next steps being explored.",
     },
     about: {
-      eyebrow: "How it works", title: "Private by design — the AI comes to your data",
-      p1: "OmniCore downloads open models (Qwen3 for text, Qwen3.5 for images, Whisper for speech) from Hugging Face once, then runs them on your own graphics card with WebGPU — or on the CPU when WebGPU isn't available. Your documents, chats, images and recordings are processed in this browser tab and stored in its local database. The churn model is a real scikit-learn Random Forest exported to run in JavaScript with identical results.",
-      p2: "The only things that ever leave your device are the ones you choose: search words sent to Wikipedia or official government portals, and messages you route to your own Slack, Discord or webhook.",
+      eyebrow: "How it works", title: "Open it and go — online by default, private when you want",
+      p1: "By default OmniCore answers with GPT-OSS 20B (and reads images with Qwen3-VL) on Hugging Face's servers — sign in once with a free Hugging Face account and replies start in about a second, with nothing to download. Prefer full privacy? Switch to the on-device engine in Settings: open models (Qwen3, Qwen3.5, Whisper) then run on your own graphics card with WebGPU, and nothing you type leaves your device.",
+      p2: "Your workspace — accounts, documents, chats, automations — is stored in your browser's own database, never on a server. The churn model is a real scikit-learn Random Forest exported to run in JavaScript with identical results.",
       forLabel: "Built with these roles in mind",
       roles: ["CEOs", "Managers", "Analysts", "Engineers", "Customer Support", "HR", "Finance", "IT Operations", "Government Agencies"],
     },
     faq: {
       eyebrow: "Questions", title: "Frequently asked",
       items: [
-        { q: "Is this really running AI in my browser?", a: "Yes. OmniCore uses Transformers.js and ONNX Runtime Web to run Qwen3 (text), Qwen3.5 (images) and Whisper (speech) directly in the page — all multilingual, including Arabic. The first time you use AI it asks before downloading the text model (about 590 MB); the vision and speech models download only when you first use them, and everything loads from your browser's cache afterwards." },
-        { q: "What do I need?", a: "A current Chrome, Edge, Safari or Firefox. A graphics card with WebGPU makes answers fast; without one the models run on the CPU, which is slower but works. Recent phones work too." },
+        { q: "Do I have to download or install anything?", a: "No. Open the page, create your workspace, and sign in once with your free Hugging Face account — the AI (GPT-OSS 20B for text, Qwen3-VL for images) then runs on Hugging Face's servers. No download and no API key. You can also install OmniCore as an app from your browser." },
+        { q: "How private is it?", a: "Your workspace is stored only in your browser. In the default online mode, the content of each AI request is sent to Hugging Face Inference Providers to be answered, using your own Hugging Face account. For complete privacy, switch Settings → AI engine to On this device: open models then run inside your browser and nothing you type leaves your device." },
         { q: "Where is my data stored?", a: "In your browser's IndexedDB on this device. Accounts use PBKDF2-hashed passwords. You can export your whole workspace to a file, import it on another device, or erase it at any time from Settings." },
         { q: "Can my team share one workspace?", a: "Accounts live on the device they were created on, so several people can share one computer with separate accounts and roles. Moving between devices works through workspace export and import." },
         { q: "How accurate is the churn model?", a: "78.3% accuracy and 84.5% ROC-AUC on 1,409 real customers it never saw in training. Only 26.5% of customers churn, so the model is tuned for F1 and recall rather than raw accuracy. You can score your own customer CSV or the full IBM dataset in the app." },
@@ -135,21 +137,21 @@ const text = {
       ],
     },
     ctaBand: { title: "Your AI workspace is one click away.", sub: "Create an account on this device in seconds. No email, no credit card.", button: "Get started" },
-    footer: { tagline: "Enterprise Multimodal AI Operating System", builtWith: "Built with", frontendLabel: "Interface", backendLabel: "On-device AI" },
+    footer: { tagline: "Enterprise Multimodal AI Operating System", builtWith: "Built with", frontendLabel: "Interface", backendLabel: "AI" },
   },
   ar: {
     nav: { modules: "الوحدات", roadmap: "خارطة الطريق", about: "حول", faq: "الأسئلة الشائعة", signIn: "افتح التطبيق", menu: "القائمة", primary: "الرئيسية", skip: "تخطَّ إلى المحتوى" },
     hero: {
       eyebrow: "نظام تشغيل ذكاء اصطناعي متعدد الوسائط للمؤسسات",
       titleA: "نواة ذكاء اصطناعي واحدة لكيفية عمل", titleHighlight: "شركتك بأكملها", titleB: "فعليًا",
-      sub: "دردشة ومستندات ورؤية وصوت ووكلاء وتنبؤات وأتمتة — تعمل بنماذج ذكاء اصطناعي داخل متصفحك. بلا خوادم ولا مفاتيح API، ولا تغادر بياناتك جهازك.",
+      sub: "دردشة ومستندات ورؤية وصوت ووكلاء وتنبؤات وأتمتة — افتحه ويعمل مباشرة. ذكاء اصطناعي فوري عبر الإنترنت بلا تثبيت، أو وضع خاص بالكامل يعمل داخل متصفحك.",
       ctaPrimary: "ابدأ مجانًا", ctaSecondary: "استكشف الوحدات",
-      liveNow: "وحدة، كلها تعمل", modulesTotal: "خوادم لتشغيله — كل شيء في متصفحك",
+      liveNow: "وحدة، كلها تعمل", modulesTotal: "تثبيت أو مفاتيح API مطلوبة",
     },
     trust: [
       { k: "84.5%", v: "دقة نموذج التسرّب (ROC-AUC) على عملاء حقيقيين محجوبين" },
       { k: "7,043", v: "سجل عميل حقيقي خلف نموذج التسرّب" },
-      { k: "0", v: "خوادم — الذكاء الاصطناعي يعمل على جهازك" },
+      { k: "0", v: "تنزيلات مطلوبة — الذكاء الاصطناعي يعمل على Hugging Face" },
       { k: "2", v: "لغتان من الدرجة الأولى: العربية والإنجليزية" },
     ],
     modules: {
@@ -163,15 +165,17 @@ const text = {
       desc: "البناء الحالي مكتمل ويعمل بالكامل داخل المتصفح. هذه هي الخطوات التالية قيد الاستكشاف.",
     },
     about: {
-      eyebrow: "كيف يعمل", title: "خاص بالتصميم — الذكاء الاصطناعي يأتي إلى بياناتك",
-      p1: "يُنزّل أومنيكور نماذج مفتوحة (Qwen3 للنصوص وQwen3.5 للصور وWhisper للكلام) من Hugging Face مرة واحدة، ثم يشغّلها على بطاقة الرسومات لديك عبر WebGPU — أو على المعالج إن لم يتوفر WebGPU. تُعالَج مستنداتك ومحادثاتك وصورك وتسجيلاتك داخل هذه الصفحة وتُحفظ في قاعدة بياناتها المحلية. ونموذج التسرّب غابة عشوائية حقيقية من scikit-learn مُصدَّرة لتعمل في JavaScript بنتائج مطابقة.",
-      p2: "لا يغادر جهازك إلا ما تختاره: كلمات البحث المرسلة إلى ويكيبيديا أو البوابات الحكومية الرسمية، والرسائل التي توجّهها إلى Slack أو Discord أو Webhook خاص بك.",
+      eyebrow: "كيف يعمل", title: "افتحه وابدأ — عبر الإنترنت افتراضيًا، وخاص عندما تريد",
+      p1: "افتراضيًا يجيب أومنيكور بنموذج GPT-OSS 20B (ويقرأ الصور بنموذج Qwen3-VL) على خوادم Hugging Face — سجّل الدخول مرة واحدة بحساب مجاني فتبدأ الإجابات خلال ثانية تقريبًا ولا يوجد ما يُنزَّل. تفضّل الخصوصية الكاملة؟ اختر المحرك «على هذا الجهاز» من الإعدادات: تعمل عندها نماذج مفتوحة (Qwen3 وQwen3.5 وWhisper) على بطاقة الرسومات لديك عبر WebGPU، ولا يغادر جهازك شيء مما تكتبه.",
+      p2: "مساحة عملك — الحسابات والمستندات والمحادثات والأتمتة — محفوظة في قاعدة بيانات متصفحك، وليس على أي خادم. ونموذج التسرّب غابة عشوائية حقيقية من scikit-learn مُصدَّرة لتعمل في JavaScript بنتائج مطابقة.",
       forLabel: "بُني مع وضع هذه الأدوار في الاعتبار",
       roles: ["الرؤساء التنفيذيون", "المديرون", "المحللون", "المهندسون", "دعم العملاء", "الموارد البشرية", "المالية", "عمليات تقنية المعلومات", "الجهات الحكومية"],
     },
     faq: {
       eyebrow: "أسئلة", title: "الأسئلة الشائعة",
       items: [
+        { q: "هل أحتاج إلى تنزيل أو تثبيت أي شيء؟", a: "لا. افتح الصفحة وأنشئ مساحة عملك وسجّل الدخول مرة واحدة بحساب Hugging Face المجاني — يعمل بعدها الذكاء الاصطناعي (GPT-OSS 20B للنصوص وQwen3-VL للصور) على خوادم Hugging Face. بلا تنزيل ولا مفتاح API. ويمكنك أيضًا تثبيت أومنيكور كتطبيق من متصفحك." },
+        { q: "ما مدى الخصوصية؟", a: "مساحة عملك محفوظة في متصفحك فقط. في الوضع الافتراضي عبر الإنترنت يُرسَل محتوى كل طلب إلى Hugging Face للإجابة عنه باستخدام حسابك. ولخصوصية كاملة اختر في الإعدادات «على هذا الجهاز»: تعمل عندها النماذج المفتوحة داخل متصفحك ولا يغادر جهازك شيء مما تكتبه." },
         { q: "هل يعمل الذكاء الاصطناعي فعلًا داخل متصفحي؟", a: "نعم. يستخدم أومنيكور مكتبتي Transformers.js وONNX Runtime Web لتشغيل Qwen3 (النصوص) وQwen3.5 (الصور) وWhisper (الكلام) مباشرة في الصفحة — وكلها متعددة اللغات بما فيها العربية. في أول استخدام يطلب إذنك قبل تنزيل نموذج النصوص (نحو 590 ميغابايت)، ولا تُنزَّل نماذج الرؤية والكلام إلا عند أول استخدام لها، ثم يُحمَّل كل شيء من ذاكرة المتصفح." },
         { q: "ماذا أحتاج؟", a: "متصفح حديث مثل Chrome أو Edge أو Safari أو Firefox. بطاقة رسومات تدعم WebGPU تجعل الإجابات سريعة، وبدونها تعمل النماذج على المعالج بشكل أبطأ. الهواتف الحديثة تعمل أيضًا." },
         { q: "أين تُحفظ بياناتي؟", a: "في IndexedDB بمتصفحك على هذا الجهاز. الحسابات تستخدم كلمات مرور مجزأة بـ PBKDF2. يمكنك تصدير مساحة عملك إلى ملف أو استيرادها على جهاز آخر أو مسحها في أي وقت من الإعدادات." },
@@ -182,7 +186,7 @@ const text = {
       ],
     },
     ctaBand: { title: "مساحة عملك بالذكاء الاصطناعي على بُعد نقرة.", sub: "أنشئ حسابًا على هذا الجهاز في ثوانٍ. بلا بريد إلكتروني ولا بطاقة ائتمان.", button: "ابدأ الآن" },
-    footer: { tagline: "نظام تشغيل ذكاء اصطناعي متعدد الوسائط للمؤسسات", builtWith: "مبني باستخدام", frontendLabel: "الواجهة", backendLabel: "ذكاء على الجهاز" },
+    footer: { tagline: "نظام تشغيل ذكاء اصطناعي متعدد الوسائط للمؤسسات", builtWith: "مبني باستخدام", frontendLabel: "الواجهة", backendLabel: "الذكاء الاصطناعي" },
   },
 };
 
@@ -319,7 +323,8 @@ function HeroVisual({ dir }) {
         }}
       >
         <img
-          src="https://images.unsplash.com/photo-1758691736483-5f600b509962?fm=jpg&q=85&w=1600&fit=crop"
+          src="https://images.unsplash.com/photo-1758691736483-5f600b509962?fm=jpg&q=80&w=1200&fit=crop"
+          fetchpriority="high"
           alt="An analyst presenting performance charts on a large screen to colleagues in a daylit meeting room"
           decoding="async"
           onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
@@ -414,6 +419,14 @@ export default function LandingPage({ lang, setLang, onGetStarted }) {
             }}>
               <Globe size={13} aria-hidden="true" /> <span lang={lang === "en" ? "ar" : "en"}>{lang === "en" ? "العربية" : "English"}</span>
             </button>
+            <InstallButton lang={lang} render={({ label, icon: Icon, onClick }) => (
+              <button onClick={onClick} className="oc-focusable" style={{
+                display: "flex", alignItems: "center", gap: 6, background: "var(--paper)", border: "1px solid var(--border)",
+                borderRadius: 99, padding: "9px 14px", minHeight: 36, fontSize: 12.5, fontWeight: 700, cursor: "pointer", color: "var(--maroon)",
+              }}>
+                <Icon size={13} aria-hidden="true" /> <span className="oc-install-label">{label}</span>
+              </button>
+            )} />
             <button onClick={onGetStarted} className="oc-focusable oc-desktop-nav" style={{
               display: "inline-flex", alignItems: "center", gap: 6, background: "var(--maroon)", color: "#fff",
               border: "none", borderRadius: 10, padding: "9px 16px", fontSize: 13.5, fontWeight: 700, cursor: "pointer",
@@ -457,20 +470,20 @@ export default function LandingPage({ lang, setLang, onGetStarted }) {
         <div style={{ position: "relative", maxWidth: 1160, margin: "0 auto", padding: "64px 24px 40px" }}>
         <div className="oc-hero-grid" style={{ display: "grid", gridTemplateColumns: "0.92fr 1.08fr", gap: 40, alignItems: "center" }}>
           <div>
-            <BlurFade delay={0}>
+            <div className="oc-fade-up" style={{ animationDelay: "0.00s" }}>
               <AnimatedGradientText className="!mx-0 !rounded-full !py-1.5 !px-3 mb-[18px] font-bold !text-[12px]">
                 <span className="inline-flex items-center gap-1.5"><Sparkles size={12} /> {t.hero.eyebrow}</span>
               </AnimatedGradientText>
-            </BlurFade>
-            <BlurFade delay={0.08}>
+            </div>
+            <div className="oc-fade-up" style={{ animationDelay: "0.04s" }}>
               <h1 className="oc-display" style={{ fontSize: "clamp(32px, 4.4vw, 50px)", fontWeight: 700, lineHeight: 1.12, color: "var(--maroon)", margin: 0 }}>
                 {t.hero.titleA} <span style={{ color: "var(--red)" }}>{t.hero.titleHighlight}</span> {t.hero.titleB}
               </h1>
-            </BlurFade>
-            <BlurFade delay={0.16}>
+            </div>
+            <div className="oc-fade-up" style={{ animationDelay: "0.08s" }}>
               <p style={{ fontSize: 16.5, lineHeight: 1.65, color: "var(--ink-soft)", marginTop: 20, maxWidth: 560 }}>{t.hero.sub}</p>
-            </BlurFade>
-            <BlurFade delay={0.24}>
+            </div>
+            <div className="oc-fade-up" style={{ animationDelay: "0.12s" }}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 30 }}>
                 <ShimmerButton onClick={onGetStarted} className="oc-focusable !text-[15px] shadow-[0_10px_24px_rgba(200,30,51,0.28)]">
                   <span className="inline-flex items-center gap-2">{t.hero.ctaPrimary} <ArrowUpRight size={16} /></span>
@@ -482,8 +495,8 @@ export default function LandingPage({ lang, setLang, onGetStarted }) {
                   {t.hero.ctaSecondary}
                 </a>
               </div>
-            </BlurFade>
-            <BlurFade delay={0.32}>
+            </div>
+            <div className="oc-fade-up" style={{ animationDelay: "0.16s" }}>
               {/* Counts are derived from MODULE_INFO, the same registry that
                   drives the status badges further down the page — so this can
                   never drift out of sync with what the module cards claim. */}
@@ -504,12 +517,12 @@ export default function LandingPage({ lang, setLang, onGetStarted }) {
                   </strong>{" "}{t.hero.modulesTotal}
                 </span>
               </div>
-            </BlurFade>
+            </div>
           </div>
           <div className="oc-hero-visual">
-            <BlurFade delay={0.12}>
+            <div className="oc-fade-up" style={{ animationDelay: "0.06s" }}>
               <HeroVisual dir={dir} />
-            </BlurFade>
+            </div>
           </div>
         </div>
         </div>

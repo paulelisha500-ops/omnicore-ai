@@ -3,16 +3,24 @@ import { SunMedium, Moon, Monitor, Cpu, Download, Trash2, Gauge, Upload, HardDri
 import { Card, CardTitle, SectionHeader, ModuleShell, Button, Badge, Segmented, Notice, Sheet, ProgressBar, toast } from "../ui.jsx";
 import { exportWorkspace, importWorkspace, wipeWorkspace, download, errText } from "../lib/data.js";
 import { storageEstimate } from "../lib/db.js";
-import { useAI, MODELS, ASR_MODEL, progressOf, sizeOf, loadingName, ensureModel, visionKeyFor, switchModel, clearModelCache, modelCacheSize, generate, detectCapabilities, isModelCached, fmtMB, fmtBytes, getAIState } from "../lib/ai.js";
+import { useHFSession, signInWithHF, signOutHF, signInAvailable, SPACE_APP_URL } from "../lib/hfauth.js";
+import { useAI, setEngine, CLOUD, MODELS, ASR_MODEL, progressOf, sizeOf, loadingName, ensureModel, visionKeyFor, switchModel, clearModelCache, modelCacheSize, generate, detectCapabilities, isModelCached, fmtMB, fmtBytes, getAIState } from "../lib/ai.js";
 
 export const REPO_URL = "https://github.com/paulelisha500-ops/omnicore-ai";
 export const SPACE_URL = "https://huggingface.co/spaces/Elisha622/omnicore-ai";
 
 const T = {
   en: {
-    title: "Settings", desc: "Appearance, language, the on-device AI engine, and your data.",
+    title: "Settings", desc: "Appearance, language, the AI engine, and your data.",
     appearance: "Appearance", theme: { system: "System", light: "Light", dark: "Dark" }, language: "Language",
-    engine: "AI engine", engineSub: "Models run inside this browser tab. Weights download once from Hugging Face and are cached.",
+    engine: "AI engine", engineSub: "Choose where answers are generated. You can switch any time.",
+    engines: {
+      cloud: ["Online", "Nothing to download. GPT-OSS 20B (text) and Qwen3-VL (images) run on Hugging Face's servers after you sign in with your free Hugging Face account — no API key."],
+      local: ["On this device", "Fully private and works offline. Open models run in this browser tab after a one-time download."],
+    },
+    recommended: "Default", hfAccount: "Hugging Face account", signedInAs: "Signed in as", notSignedIn: "Not signed in — sign in to use the online AI.",
+    hfSignIn: "Sign in with Hugging Face", hfSignOut: "Sign out", notHere: "Sign-in works on the Hugging Face–hosted app.", openSpace: "Open on Hugging Face",
+    credit: "Uses your account's free monthly inference credit (about $0.10 on free accounts — hundreds of answers).", localModels: "On-device models", localSub: "Used when the engine is On this device. Image description always uses the on-device vision model.",
     textModel: "Text model", textSub: "Answers chat, summaries, agents and every other text task.", visionModel: "Vision model", visionSub: "Reads images and scanned pages. Downloads the first time you analyze an image.",
     same: "The text model also reads images — nothing extra to download.", fastest: "Fastest", loadVision: "Download vision model", speed: "Speed on this device",
     firstToken: "first word after",
@@ -30,7 +38,14 @@ const T = {
   ar: {
     title: "الإعدادات", desc: "المظهر واللغة ومحرك الذكاء الاصطناعي على الجهاز وبياناتك.",
     appearance: "المظهر", theme: { system: "النظام", light: "فاتح", dark: "داكن" }, language: "اللغة",
-    engine: "محرك الذكاء الاصطناعي", engineSub: "تعمل النماذج داخل هذه الصفحة. تُنزَّل الأوزان مرة واحدة من Hugging Face ثم تُحفَظ.",
+    engine: "محرك الذكاء الاصطناعي", engineSub: "اختر أين تُولَّد الإجابات. يمكنك التبديل في أي وقت.",
+    engines: {
+      cloud: ["عبر الإنترنت", "لا شيء يُنزَّل. يعمل GPT-OSS 20B (النصوص) وQwen3-VL (الصور) على خوادم Hugging Face بعد تسجيل الدخول بحسابك المجاني — بلا مفتاح API."],
+      local: ["على هذا الجهاز", "خاص بالكامل ويعمل دون اتصال. تعمل النماذج المفتوحة داخل هذه الصفحة بعد تنزيل لمرة واحدة."],
+    },
+    recommended: "افتراضي", hfAccount: "حساب Hugging Face", signedInAs: "مسجَّل الدخول باسم", notSignedIn: "لم تسجّل الدخول — سجّل الدخول لاستخدام الذكاء عبر الإنترنت.",
+    hfSignIn: "تسجيل الدخول عبر Hugging Face", hfSignOut: "تسجيل الخروج", notHere: "تسجيل الدخول يعمل في النسخة المستضافة على Hugging Face.", openSpace: "افتح على Hugging Face",
+    credit: "يستخدم الرصيد الشهري المجاني لحسابك (نحو 0.10 دولار للحسابات المجانية — مئات الإجابات).", localModels: "النماذج على الجهاز", localSub: "تُستخدم عندما يكون المحرك «على هذا الجهاز». وصف الصور يستخدم دائمًا نموذج الرؤية على الجهاز.",
     textModel: "نموذج النصوص", textSub: "يجيب في الدردشة والملخصات والوكلاء وكل مهام النصوص.", visionModel: "نموذج الرؤية", visionSub: "يقرأ الصور والصفحات الممسوحة. يُنزَّل أول مرة تحلل فيها صورة.",
     same: "نموذج النصوص يقرأ الصور أيضًا — لا شيء إضافي للتنزيل.", fastest: "الأسرع", loadVision: "تنزيل نموذج الرؤية", speed: "السرعة على هذا الجهاز",
     firstToken: "أول كلمة بعد",
@@ -50,6 +65,7 @@ const T = {
 export default function Settings({ lang, setLang, theme, setTheme, user }) {
   const t = T[lang];
   const ai = useAI();
+  const hf = useHFSession();
   const [caps, setCaps] = useState(ai.caps);
   const [cache, setCache] = useState(null);
   const [bench, setBench] = useState(null);
@@ -66,7 +82,7 @@ export default function Settings({ lang, setLang, theme, setTheme, user }) {
   const runBench = async () => {
     setBenching(true); setBench(null); setErr(null);
     try {
-      await ensureModel(ai.modelKey);
+      if (ai.engine === "local") await ensureModel(ai.modelKey);
       await generate({ prompt: "Write three sentences about the ocean.", maxTokens: 64, temperature: 0.7 });
       setBench(getAIState().lastStats);
     } catch (e) { if (!e.declined) setErr(errText(e, lang)); }
@@ -106,6 +122,41 @@ export default function Settings({ lang, setLang, theme, setTheme, user }) {
 
         <Card>
           <CardTitle sub={t.engineSub}>{t.engine}</CardTitle>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10, marginBottom: 18 }}>
+            {["cloud", "local"].map((e) => {
+              const active = ai.engine === e;
+              const [name, desc] = t.engines[e];
+              return (
+                <button key={e} onClick={() => setEngine(e)} disabled={ai.busy > 0} aria-pressed={active} className="oc-press oc-focusable"
+                  style={{ textAlign: "start", border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`, background: active ? "var(--accent-soft)" : "var(--surface-2)", borderRadius: 16, padding: 14, cursor: "pointer" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                    <span style={{ fontWeight: 700, fontSize: 15, display: "inline-flex", alignItems: "center", gap: 7 }}>{e === "cloud" ? <Zap size={16} color="var(--accent)" /> : <Cpu size={16} color="var(--accent)" />}{name}</span>
+                    {e === "cloud" ? <Badge tone="spark">{t.recommended}</Badge> : active ? <Badge tone="success" icon={CheckCircle2}>{t.st[ai.phase] || ""}</Badge> : null}
+                  </div>
+                  <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 6, lineHeight: 1.5 }}>{desc}</div>
+                </button>
+              );
+            })}
+          </div>
+          {ai.engine === "cloud" && (
+            <div style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--surface-sunken)", borderRadius: 14, padding: 12, marginBottom: 18, flexWrap: "wrap" }}>
+              {hf?.avatar ? <img src={hf.avatar} alt="" width={36} height={36} style={{ borderRadius: 99 }} /> : <div style={{ width: 36, height: 36, borderRadius: 99, background: "var(--spark-soft)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🤗</div>}
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5 }}>{t.hfAccount}</div>
+                <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 2 }}>
+                  {hf ? `${t.signedInAs} ${hf.name || hf.username}${hf.username ? ` (@${hf.username})` : ""}` : signInAvailable() ? t.notSignedIn : t.notHere}
+                </div>
+                <div style={{ fontSize: 11.5, color: "var(--ink-faint)", marginTop: 3 }}>{t.credit}</div>
+              </div>
+              {hf
+                ? <Button size="sm" variant="ghost" onClick={signOutHF}>{t.hfSignOut}</Button>
+                : signInAvailable()
+                  ? <Button size="sm" variant="accent" onClick={() => signInWithHF()}>{t.hfSignIn}</Button>
+                  : <a href={SPACE_APP_URL} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}><Button size="sm" variant="accent" icon={ExternalLink}>{t.openSpace}</Button></a>}
+            </div>
+          )}
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{t.localModels}</div>
+          <div style={{ fontSize: 12.5, color: "var(--ink-faint)", marginBottom: 12 }}>{t.localSub}</div>
           <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 4 }}>{t.textModel}</div>
           <div style={{ fontSize: 12.5, color: "var(--ink-faint)", marginBottom: 10 }}>{t.textSub}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 10 }}>
@@ -138,7 +189,7 @@ export default function Settings({ lang, setLang, theme, setTheme, user }) {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginTop: 14 }}>
             <Info label={t.device} value={caps == null ? t.checking : caps.webgpu ? t.webgpu : t.cpu} extra={caps?.webgpu ? `${caps.f16 ? t.f16 + " ✓" : ""} ${caps.adapter || ""}`.trim() : ""} icon={caps?.webgpu ? Zap : Cpu} />
-            <Info label={t.status} value={ai.phase === "ready" ? `${t.st.ready} · ${ai.device === "webgpu" ? "WebGPU" : "CPU"}` : t.st[ai.phase]} icon={ai.phase === "ready" ? CheckCircle2 : ai.phase === "error" ? AlertTriangle : Cpu} />
+            <Info label={t.status} value={ai.engine === "cloud" ? `${t.st.ready} · ${t.engines.cloud[0]}` : ai.phase === "ready" ? `${t.st.ready} · ${ai.device === "webgpu" ? "WebGPU" : "CPU"}` : t.st[ai.phase]} icon={ai.phase === "ready" ? CheckCircle2 : ai.phase === "error" ? AlertTriangle : Cpu} />
             <Info label={t.cache} value={cache ? fmtBytes(cache.bytes) : "—"} extra={cache ? `${cache.files} files` : ""} icon={HardDrive} />
           </div>
           {busyLoading && <div style={{ marginTop: 12 }}>
@@ -157,13 +208,13 @@ export default function Settings({ lang, setLang, theme, setTheme, user }) {
           {ai.notice && <Notice tone="spark" style={{ marginTop: 12 }}>{ai.notice}</Notice>}
           {err && <Notice tone="danger" style={{ marginTop: 12 }}>{err}</Notice>}
           <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
-            {status(ai.modelKey) !== "ready" && <Button variant="accent" icon={Download} onClick={() => load(ai.modelKey)} loading={ai.loadingKey === ai.modelKey}>{isModelCached(ai.modelKey) ? t.reload : t.load}</Button>}
+            {ai.engine === "local" && status(ai.modelKey) !== "ready" && <Button variant="accent" icon={Download} onClick={() => load(ai.modelKey)} loading={ai.loadingKey === ai.modelKey}>{isModelCached(ai.modelKey) ? t.reload : t.load}</Button>}
             <Button variant="ghost" icon={Gauge} onClick={runBench} loading={benching} disabled={busyLoading}>{benching ? t.benchRunning : t.bench}</Button>
             <Button variant="danger" icon={Trash2} onClick={async () => { await clearModelCache(); setCache(await modelCacheSize()); toast(t.cleared); }} disabled={busyLoading || ai.busy > 0}>{t.clearCache}</Button>
           </div>
           {bench?.tps > 0 && (
             <Notice tone="success" icon={Gauge} style={{ marginTop: 12 }}>
-              <strong>{t.speed}:</strong> {bench.tps.toFixed(1)} {t.tps} · {bench.device === "webgpu" ? "WebGPU" : "CPU"}
+              <strong>{t.speed}:</strong> {bench.tps.toFixed(1)} {t.tps} · {bench.device === "cloud" ? `${bench.model || CLOUD.name} · Hugging Face` : bench.device === "webgpu" ? "WebGPU" : "CPU"}
               {bench.firstTokenMs ? ` · ${t.firstToken} ${(bench.firstTokenMs / 1000).toFixed(1)}s` : ""}
             </Notice>
           )}

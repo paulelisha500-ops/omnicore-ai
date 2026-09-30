@@ -12,12 +12,23 @@ responsibility moved into the browser:
 
 | Was | Now |
 |---|---|
-| Ollama (qwen3:4b, qwen2.5vl:7b) | Transformers.js in a Web Worker: Qwen3 0.6B (text), Qwen3.5 0.8B (images), Whisper base (speech). WebGPU when available, WebAssembly otherwise. |
+| Ollama (qwen3:4b, qwen2.5vl:7b) | Online (default): Hugging Face Inference Providers after "Sign in with Hugging Face" — GPT-OSS 20B (text), Qwen3-VL 30B (images). On-device (optional): Transformers.js in a Web Worker — Qwen3 0.6B, Qwen3.5 0.8B, Whisper base. |
 | Postgres | IndexedDB (`lib/db.js`), per-user rows, change feed synced across tabs. |
 | JWT + bcrypt auth, Redis rate limit | PBKDF2-SHA-256 (310k iterations) via WebCrypto, 5-failure / 15-minute lockout, 24-hour sessions (`lib/auth.js`). |
 | `/api/predict/churn` (joblib) | The same Random Forest exported to JSON and evaluated in JS (`lib/churn.js`). |
 | SearXNG | CORS-enabled public APIs: Wikipedia, US Federal Register, GOV.UK, EU Open Data Portal (`lib/web.js`). |
 | Recorded-only automation runs | A real in-app automation engine that dispatches notifications, webhooks, Slack/Discord posts and knowledge-base entries (`lib/automation.js`). |
+
+## Why online AI uses "Sign in with Hugging Face"
+
+Free, key-less public AI endpoints were tested and rejected: Pollinations'
+anonymous tier answers command-line requests but refuses real browsers
+(Cloudflare Turnstile token required, plus 402/500 responses). Embedding an
+owner's token in a public static page would let anyone drain it. Hugging Face
+OAuth on the Space is the robust option: each visitor signs in once, and
+inference is billed to their own account's free monthly credit ($0.10 on free
+accounts, subject to change — hundreds of short answers). When a visitor runs
+out, the app says so and offers the on-device engine.
 
 ## Model choice, measured
 
@@ -47,6 +58,9 @@ each split comparison, exactly as scikit-learn does.
 
 ## Honest limits
 
+- **Online AI needs a Hugging Face account** and works on the Hugging Face–hosted
+  app (the OAuth app belongs to the Space). Other hosts (GitHub Pages, local)
+  offer a link to it, or the on-device engine.
 - **Accounts are per browser.** There is no server, so an account and its data
   live on the device where they were created. Several people can share one
   device with separate accounts and roles; moving between devices uses

@@ -68,6 +68,13 @@ export async function connect(owner, type, value = "") {
   }
   if (type === "browser") {
     if (!("Notification" in window)) throw new Error("This browser doesn't support notifications.");
+    let framed = false;
+    try { framed = window.self !== window.top; } catch { framed = true; }
+    if (framed) {
+      const e = new Error("Browsers don't allow notifications inside the Hugging Face page. Open the full app (Install/Open full app button at the top) and connect notifications there.");
+      e.ar = "لا تسمح المتصفحات بالإشعارات داخل صفحة Hugging Face. افتح التطبيق كاملًا (زر التثبيت/فتح التطبيق في الأعلى) واربط الإشعارات هناك.";
+      throw e;
+    }
     const perm = await Notification.requestPermission();
     if (perm !== "granted") {
       const e = new Error("Notification permission was not granted. You can allow it from the site settings in your browser.");
@@ -127,7 +134,9 @@ export async function deliver(row, { title, text, data = {} }, { interactive = f
         result = { ok: false, note: "Email opens your mail app, so it only runs when you click Run or Send test" };
       } else {
         const href = `mailto:${encodeURIComponent(row.target)}?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text)}`;
-        window.location.href = href;
+        // window.open works inside sandboxed frames (e.g. the Hugging Face page) where changing location doesn't.
+        const w = window.open(href, "_blank");
+        if (!w) window.location.href = href;
         result = { ok: null, note: "Opened your mail app" };
       }
     } else if (row.type === "browser") {
