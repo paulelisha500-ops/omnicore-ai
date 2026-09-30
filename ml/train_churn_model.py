@@ -53,7 +53,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent          # .../ml
 PROJECT_ROOT = SCRIPT_DIR.parent                        # .../omnicore-ai
 DATA_DIR = SCRIPT_DIR / "data"
 ARTIFACTS_DIR = SCRIPT_DIR / "artifacts"
-BACKEND_MODEL_PATH = PROJECT_ROOT / "backend" / "app" / "ml" / "churn_model.joblib"
+APP_MODEL_PATH = SCRIPT_DIR / "churn_model.joblib"   # exported to the browser by export_churn_model.py
 DATASET_URL = "https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv"
 
 DATA_DIR.mkdir(exist_ok=True)
@@ -217,17 +217,9 @@ model_path = ARTIFACTS_DIR / "churn_model.joblib"
 joblib.dump(best_pipe, model_path)
 print(f"\nSaved artifacts to {ARTIFACTS_DIR}/")
 
-# Keep the live backend's model in sync with this training run.
-if BACKEND_MODEL_PATH.parent.exists():
-    shutil.copy(model_path, BACKEND_MODEL_PATH)
-    print(f"Also updated the live backend model at {BACKEND_MODEL_PATH}")
-    print("Restart the backend (or it'll pick this up on next container start) to serve the new model.")
-else:
-    print(f"Note: {BACKEND_MODEL_PATH.parent} doesn't exist — skipped syncing to the backend.")
-
-print("\nNOTE: frontend/src/App.jsx embeds a snapshot of these metrics as static")
-print("constants (REAL_CHURN_METRICS etc.) so the UI works without a live call.")
-print("If you retrain and want the displayed numbers to match, copy the new")
-print(f"values from {ARTIFACTS_DIR}/metrics.json into those constants by hand.")
-print(f"\nAlso check backend/app/config.py -> CHURN_DECISION_THRESHOLD matches")
-print(f"the tuned threshold above ({best_threshold}) if you retrain on different data.")
+# Keep the app's model in sync with this training run, then export it to the
+# JSON forest the browser evaluates (frontend/public/models/churn-forest.json).
+shutil.copy(model_path, APP_MODEL_PATH)
+print(f"Updated {APP_MODEL_PATH}")
+print("Now run: python ml/export_churn_model.py  (re-exports and verifies the browser model)")
+print("If the metrics changed, update METRICS / CONFUSION / ROC / IMPORTANCE in frontend/src/lib/churn.js.")
