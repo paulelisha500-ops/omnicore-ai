@@ -4,7 +4,9 @@ static Space. Run from the project root after `npm run build`:
 
     python scripts/deploy_hf_space.py
 
-Requires `huggingface_hub` and a logged-in account (`hf auth login`).
+Requires `huggingface_hub` and a logged-in account (`hf auth login`), or a
+write token in the `HF_TOKEN` environment variable (how the deploy workflow
+runs it).
 """
 from pathlib import Path
 

@@ -1,0 +1,102 @@
+# Builds the app on every push and pull request. On main, that one build is then
+# published to both hosts -- no manual deployment:
+#   - GitHub Pages, through the gh-pages branch (scripts/deploy_gh_pages.sh)
+#   - the Hugging Face Space (scripts/deploy_hf_space.py)
+# Publishing to the Space needs one repository secret:
+#   HF_TOKEN  a Hugging Face access token with write access to the Space
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+    paths: ["frontend/**", "scripts/**", ".github/workflows/deploy.yml"]
+  pull_request:
+    paths: ["frontend/**", "scripts/**", ".github/workflows/deploy.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      # The app runs ONNX Runtime in the browser; the Node binaries are never used.
+      - run: ONNXRUNTIME_NODE_INSTALL=skip npm ci --no-audit --no-fund
+      - run: npm run build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: frontend/dist
+          if-no-files-found: error
+          retention-days: 7
+
+  pages:
+    name: Publish to GitHub Pages
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: frontend/dist
+      - name: Push the build to the gh-pages branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # The script pushes from a throwaway repository, so the token goes in global config.
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+          bash scripts/deploy_gh_pages.sh
+
+  space:
+    name: Publish to the Hugging Face Space
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - name: Check for the Hugging Face token
+        id: token
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::warning::HF_TOKEN is not set, so the Space was not updated. Add it under Settings > Secrets and variables > Actions."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        if: steps.token.outputs.present == 'true'
+      - uses: actions/download-artifact@v8
+        if: steps.token.outputs.present == 'true'
+        with:
+          name: dist
+          path: frontend/dist
+      - uses: actions/setup-python@v7
+        if: steps.token.outputs.present == 'true'
+        with:
+          python-version: "3.12"
+      - name: Upload the build to the Space
+        if: steps.token.outputs.present == 'true'
+        run: |
+          pip install --quiet huggingface_hub
+          python scripts/deploy_hf_space.py

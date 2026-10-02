@@ -72,12 +72,18 @@ Then open http://localhost:5173. Build a production bundle with `npm run build`
 
 ## Deploy
 
-Build once with `cd frontend && npm run build`, then from the project root:
+Every push to `main` that touches the app is built and published to both hosts
+by `.github/workflows/deploy.yml`; pull requests are built but not published.
+The Space upload needs one repository secret, `HF_TOKEN` (a Hugging Face token
+with write access to the Space).
+
+To publish by hand instead, build once with `cd frontend && npm run build`,
+then from the project root:
 
 - **GitHub Pages:** `bash scripts/deploy_gh_pages.sh` publishes
   `frontend/dist` to the `gh-pages` branch (Pages source: `gh-pages`, `/`).
 - **Hugging Face Space:** `python scripts/deploy_hf_space.py` (needs
-  `hf auth login`).
+  `hf auth login`, or `HF_TOKEN` in the environment).
 
 ## Retrain the churn model
 
@@ -97,7 +103,8 @@ frontend/src/
   lib/                 ai (worker + client), db, auth, data, search, web,
                        docs, churn, automation, integrations, trade, audio
 ml/                    churn model training + export
-scripts/               Hugging Face Space deploy
+scripts/               GitHub Pages and Hugging Face Space deploy
+.github/workflows/     build on every push, publish from main
 ```
 
 See `PROJECT_NOTES.md` for design decisions and honest limits.
