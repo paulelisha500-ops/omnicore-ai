@@ -37,16 +37,24 @@ export function NumberTicker({ value, direction = "up", delay = 0, decimalPlaces
   const isInView = useInView(ref, { once: true, margin: "0px" });
   const reduce = useReducedMotion();
   const fmt = (n) => Intl.NumberFormat("en-US", { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces }).format(n);
+  const target = direction === "down" ? 0 : value;
   // With reduced motion the figure is shown at its final value from the first
-  // paint — no count-up, and no "0" placeholder flash for a screen reader.
-  const [display, setDisplay] = useState(reduce ? fmt(value) : "0");
+  // paint — no count-up.
+  const [display, setDisplay] = useState(reduce ? fmt(target) : "0");
 
   useEffect(() => {
-    if (reduce) { setDisplay(fmt(value)); return; }
+    // Jump straight to the final value. A hidden tab doesn't run animation
+    // frames, so a count-up there would sit at "0" until the tab is shown and
+    // then play to nobody's benefit; settle it instead, including when the tab
+    // is hidden part-way through.
+    const settle = () => { springValue.jump(target); setDisplay(fmt(target)); };
+    if (reduce || document.hidden) { settle(); return; }
     if (!isInView) return;
-    const timer = setTimeout(() => motionValue.set(direction === "down" ? 0 : value), delay * 1000);
-    return () => clearTimeout(timer);
-  }, [motionValue, isInView, delay, value, direction, reduce]); // eslint-disable-line react-hooks/exhaustive-deps
+    const timer = setTimeout(() => motionValue.set(target), delay * 1000);
+    const onVisibility = () => { if (document.hidden) { clearTimeout(timer); settle(); } };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => { clearTimeout(timer); document.removeEventListener("visibilitychange", onVisibility); };
+  }, [motionValue, springValue, isInView, delay, target, reduce]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(
     () =>
@@ -61,9 +69,13 @@ export function NumberTicker({ value, direction = "up", delay = 0, decimalPlaces
     [springValue, decimalPlaces]
   );
 
+  // The animated figure is hidden from assistive tech, which gets the final
+  // value instead — never a "0" or a half-counted number. That copy is
+  // unselectable so copying the figure doesn't paste it twice.
   return (
     <span ref={ref} className={cn("inline-block tabular-nums", className)}>
-      {prefix}{display}{suffix}
+      <span aria-hidden="true">{prefix}{display}{suffix}</span>
+      <span className="sr-only select-none">{prefix}{fmt(target)}{suffix}</span>
     </span>
   );
 }

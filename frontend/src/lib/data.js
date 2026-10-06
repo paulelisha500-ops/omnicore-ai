@@ -164,15 +164,41 @@ export async function exportWorkspace(owner) {
   return out;
 }
 
+// Fields in one row that point at a row in another store, so they can follow
+// an id that was reassigned on import.
+const EVENT_REFS = { docId: "docs", threadId: "threads", recordId: "records", ruleId: "automations" };
+
 export async function importWorkspace(owner, data) {
   if (!data || data.format !== "omnicore-workspace") throw new Error("That file isn't an OmniCore workspace export.");
+  // Re-own everything to the importing user. A row keeps its id when that id
+  // is free or already the importer's, so re-importing the same file updates
+  // rows instead of duplicating them. An id held by another account gets a
+  // fresh one — otherwise the import would overwrite that account's row and
+  // take it over.
+  const rows = {};
+  const remap = {};
+  for (const s of OWNED) {
+    const taken = new Map((await db.all(s)).map((r) => [r.id, r.owner]));
+    remap[s] = new Map();
+    rows[s] = (Array.isArray(data[s]) ? data[s] : []).filter((r) => r && r.id).map((r) => {
+      if (!taken.has(r.id) || taken.get(r.id) === owner) return { ...r, owner };
+      const id = uid();
+      remap[s].set(r.id, id);
+      return { ...r, id, owner };
+    });
+  }
+  const follow = (store, id) => remap[store].get(id) ?? id;
+  rows.automations = rows.automations.map((r) => (r.integrationId ? { ...r, integrationId: follow("integrations", r.integrationId) } : r));
+  rows.events = rows.events.map((r) => {
+    if (!r.data || typeof r.data !== "object") return r;
+    const d = { ...r.data };
+    for (const [k, store] of Object.entries(EVENT_REFS)) if (d[k]) d[k] = follow(store, d[k]);
+    return { ...r, data: d };
+  });
   let n = 0;
   for (const s of OWNED) {
-    const rows = Array.isArray(data[s]) ? data[s] : [];
-    // Re-own everything to the importing user; keep ids so re-importing the
-    // same file updates rows instead of duplicating them.
-    await db.putMany(s, rows.filter((r) => r && r.id).map((r) => ({ ...r, owner })));
-    n += rows.length;
+    await db.putMany(s, rows[s]);
+    n += rows[s].length;
   }
   return n;
 }

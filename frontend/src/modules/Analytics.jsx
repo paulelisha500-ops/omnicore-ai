@@ -119,8 +119,11 @@ function Predict({ t, lang, user, model }) {
   // Keep dependent fields valid, exactly as they appear in the dataset: no
   // internet service means every internet add-on is "No internet service".
   const INTERNET_ADDONS = ["OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies"];
+  // Numbers are held to the field's range: a tenure of -5 or charges of 1e9
+  // aren't customers, and the model would still score them confidently.
+  const clamp = (f, n) => (Number.isFinite(n) ? Math.min(f.max, Math.max(f.min, n)) : f.def);
   const set = (f) => (e) => setRow((r) => {
-    const v = f.type === "number" || f.key === "SeniorCitizen" ? Number(e.target.value) : e.target.value;
+    const v = f.type === "number" ? clamp(f, Number(e.target.value)) : f.key === "SeniorCitizen" ? Number(e.target.value) : e.target.value;
     const next = { ...r, [f.key]: v };
     if (f.key === "InternetService") {
       for (const k of INTERNET_ADDONS) {
