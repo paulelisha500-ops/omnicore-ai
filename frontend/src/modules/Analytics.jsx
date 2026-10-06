@@ -4,6 +4,7 @@ import { TrendingUp, AlertTriangle, CheckCircle2, Upload, Download, Database, Sa
 import { Card, CardTitle, SectionHeader, ModuleShell, Button, Badge, Notice, Segmented, Field, EmptyState, ProgressBar, useChartColors, tooltipStyle, toast } from "../ui.jsx";
 import { addRecord, deleteRecord, useRecords, logEvent, errText, timeAgo, download } from "../lib/data.js";
 import { loadModel, predictWith, FIELDS, DEFAULT_ROW, THRESHOLD, METRICS, CONFUSION, ROC, IMPORTANCE, parseCSV, toCSV, SAMPLE_CSV_URL } from "../lib/churn.js";
+import { commonText } from "../i18n.js";
 
 const T = {
   en: {
@@ -213,7 +214,7 @@ function Predict({ t, lang, user, model }) {
                 </span>
                 <span style={{ fontSize: 11.5, color: "var(--ink-faint)" }}>{timeAgo(s.at, lang)}</span>
                 <Button size="sm" variant="link" onClick={() => setRow({ ...DEFAULT_ROW, ...s.row })}>{lang === "ar" ? "فتح" : "Load"}</Button>
-                <button onClick={() => deleteRecord(s.id)} aria-label="Delete" style={{ border: "none", background: "none", cursor: "pointer", color: "var(--ink-faint)" }}><Trash2 size={14} /></button>
+                <button onClick={() => deleteRecord(s.id)} aria-label={commonText[lang].delete} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--ink-faint)" }}><Trash2 size={14} /></button>
               </div>
             ))}
           </div>

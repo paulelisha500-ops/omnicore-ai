@@ -5,6 +5,7 @@ import { addDoc, addRecord, deleteRecord, useRecords, logEvent, errText, timeAgo
 import { readFile, chunkText, wordCount, ACCEPT } from "../lib/docs.js";
 import { generate, stopGenerating, readImageText } from "../lib/ai.js";
 import { rank } from "../lib/search.js";
+import { commonText } from "../i18n.js";
 
 const T = {
   en: {
@@ -275,7 +276,7 @@ export default function Documents({ lang, user }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <FileText size={15} color="var(--accent)" />
                   <div style={{ fontWeight: 650, fontSize: 13.5, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.name}</div>
-                  <button onClick={() => deleteRecord(h.id)} aria-label="Delete" className="oc-press" style={{ border: "none", background: "none", color: "var(--ink-faint)", cursor: "pointer" }}><Trash2 size={14} /></button>
+                  <button onClick={() => deleteRecord(h.id)} aria-label={commonText[lang].delete} className="oc-press" style={{ border: "none", background: "none", color: "var(--ink-faint)", cursor: "pointer" }}><Trash2 size={14} /></button>
                 </div>
                 <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 6, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{h.summary}</div>
                 <div style={{ fontSize: 11, color: "var(--ink-faint)", marginTop: 6 }}>{timeAgo(h.at, lang)}{h.words ? ` · ${h.words.toLocaleString()} ${t.words}` : ""}</div>

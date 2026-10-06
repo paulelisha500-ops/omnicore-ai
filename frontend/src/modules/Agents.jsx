@@ -6,6 +6,7 @@ import { db } from "../lib/db.js";
 import { generate, stopGenerating } from "../lib/ai.js";
 import { webSearch, sourceBlock } from "../lib/web.js";
 import { parseCSV } from "../lib/churn.js";
+import { commonText } from "../i18n.js";
 
 const AGENTS = [
   { key: "research", icon: Search, en: "Research Agent", ar: "وكيل البحث", enD: "Pulls live sources, then writes a cited brief", arD: "يجلب مصادر حية ثم يكتب موجزًا موثقًا",
@@ -185,7 +186,7 @@ function AgentSheet({ agent, lang, t, user, runs, onClose }) {
           {csv
             ? <Badge tone="success" icon={FileSpreadsheet}>{csv.name} · {csv.rows.toLocaleString()} × {csv.cols}</Badge>
             : <Button size="sm" variant="ghost" icon={Upload} onClick={() => fileRef.current?.click()}>{t.attach}</Button>}
-          {csv && <button onClick={() => setCsv(null)} aria-label="Remove" style={{ border: "none", background: "none", cursor: "pointer", color: "var(--ink-faint)" }}><X size={14} /></button>}
+          {csv && <button onClick={() => setCsv(null)} aria-label={commonText[lang].remove} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--ink-faint)" }}><X size={14} /></button>}
           <input ref={fileRef} type="file" accept=".csv,text/csv" hidden onChange={(e) => { attach(e.target.files?.[0]); e.target.value = ""; }} />
         </div>
       )}
@@ -221,7 +222,7 @@ function AgentSheet({ agent, lang, t, user, runs, onClose }) {
                 <summary style={{ cursor: "pointer", fontSize: 13, display: "flex", gap: 8, alignItems: "center" }}>
                   <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600 }}>{r.input || r.csv || (lang === "ar" ? "تقرير" : "Report")}</span>
                   <span style={{ fontSize: 11.5, color: "var(--ink-faint)" }}>{timeAgo(r.at, lang)}</span>
-                  <button onClick={(e) => { e.preventDefault(); deleteRecord(r.id); }} aria-label="Delete" style={{ border: "none", background: "none", cursor: "pointer", color: "var(--ink-faint)" }}><Trash2 size={13} /></button>
+                  <button onClick={(e) => { e.preventDefault(); deleteRecord(r.id); }} aria-label={commonText[lang].delete} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--ink-faint)" }}><Trash2 size={13} /></button>
                 </summary>
                 <div style={{ fontSize: 13.5, lineHeight: 1.6, marginTop: 8 }}><Markdown text={r.output} /></div>
               </details>

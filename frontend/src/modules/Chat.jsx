@@ -9,6 +9,7 @@ import { generate, stopGenerating, useAI } from "../lib/ai.js";
 import { rank } from "../lib/search.js";
 import { chunkText, readFile, downscale, ACCEPT } from "../lib/docs.js";
 import { webSearch, sourceBlock } from "../lib/web.js";
+import { commonText } from "../i18n.js";
 
 const T = {
   en: {
@@ -240,7 +241,7 @@ export default function Chat({ lang, user }) {
               {attachments.map((a, i) => (
                 <div key={i} style={{ position: "relative" }}>
                   <img src={a.url} alt="" style={{ width: 58, height: 58, objectFit: "cover", borderRadius: 12, border: "1px solid var(--border)" }} />
-                  <button onClick={() => setAttachments((l) => l.filter((_, j) => j !== i))} aria-label="Remove"
+                  <button onClick={() => setAttachments((l) => l.filter((_, j) => j !== i))} aria-label={commonText[lang].remove}
                     style={{ position: "absolute", top: -6, insetInlineEnd: -6, width: 20, height: 20, borderRadius: 99, border: "none", background: "var(--ink)", color: "var(--bg)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <X size={12} />
                   </button>
@@ -254,7 +255,7 @@ export default function Chat({ lang, user }) {
               style={{ flex: 1, border: "none", background: "transparent", resize: "none", outline: "none", fontSize: 15, lineHeight: 1.5, padding: "7px 0", maxHeight: 180 }} />
             {busy
               ? <IconButton icon={Square} title={t.stop} onClick={stopGenerating} style={{ background: "var(--ink)", color: "var(--bg)", borderRadius: 13 }} />
-              : <IconButton icon={Send} title="Send" onClick={() => send()} disabled={!input.trim() && !attachments.length}
+              : <IconButton icon={Send} title={commonText[lang].send} onClick={() => send()} disabled={!input.trim() && !attachments.length}
                   style={{ background: input.trim() || attachments.length ? "var(--accent)" : "var(--border)", color: "#fff", borderRadius: 13 }} />}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
@@ -365,7 +366,7 @@ function SidePanel({ lang, t, user, threads, docs, activeId, openThread, newChat
               <div style={{ fontSize: 13, fontWeight: 650, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.title}</div>
               <div style={{ fontSize: 11, color: "var(--ink-faint)" }}>{d.content.length.toLocaleString()} {t.chars} · {d.source}</div>
             </div>
-            <IconButton icon={Trash2} size={28} title="Delete" onClick={() => removeDoc(d.id)} />
+            <IconButton icon={Trash2} size={28} title={commonText[lang].delete} onClick={() => removeDoc(d.id)} />
           </div>
         ))}
       </div>
@@ -382,7 +383,7 @@ function SidePanel({ lang, t, user, threads, docs, activeId, openThread, newChat
             </div>
             <div style={{ fontSize: 11, color: "var(--ink-faint)", marginTop: 2 }}>{th.messages.length} · {timeAgo(th.updatedAt, lang)}</div>
           </button>
-          <IconButton icon={Trash2} size={28} title="Delete" onClick={() => onDelete(th)} />
+          <IconButton icon={Trash2} size={28} title={commonText[lang].delete} onClick={() => onDelete(th)} />
         </div>
       ))}
     </div>
