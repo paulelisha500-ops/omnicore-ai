@@ -266,7 +266,7 @@ function Sidebar({ lang, route, go, collapsed, mobileOpen, setMobileOpen, isAdmi
   return (
     <>
       <div className={`oc-sidebar-backdrop ${mobileOpen ? "show" : ""}`} onClick={() => setMobileOpen(false)} />
-      <aside className={`oc-sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`} aria-label="Main navigation">
+      <aside className={`oc-sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`} aria-label={commonText[lang].mainNav}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 16px", height: 58, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
           <div style={{ width: 30, height: 30, borderRadius: 9, background: "linear-gradient(135deg, #0C8479, #2DD4BF)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Zap size={16} color="#fff" />
@@ -317,7 +317,7 @@ function Sidebar({ lang, route, go, collapsed, mobileOpen, setMobileOpen, isAdmi
 function TabBar({ lang, route, go, openMore }) {
   const items = TAB_BAR.map((k) => NAV_ITEMS.find((n) => n.key === k));
   return (
-    <nav className="oc-tabbar" aria-label="Quick navigation">
+    <nav className="oc-tabbar" aria-label={commonText[lang].quickNav}>
       {items.map((n) => {
         const active = route === n.key;
         return (

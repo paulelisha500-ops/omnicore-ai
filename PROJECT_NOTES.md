@@ -19,6 +19,36 @@ responsibility moved into the browser:
 | SearXNG | CORS-enabled public APIs: Wikipedia, US Federal Register, GOV.UK, EU Open Data Portal (`lib/web.js`). |
 | Recorded-only automation runs | A real in-app automation engine that dispatches notifications, webhooks, Slack/Discord posts and knowledge-base entries (`lib/automation.js`). |
 
+The interface is hand-styled React with CSS variables (`styles.js`). Tailwind
+is present only to power the Magic UI components in `magicui.jsx` (landing
+page, KPI counters); its Preflight reset is off so it can't restyle the app.
+
+## Several accounts on one device
+
+Every row in IndexedDB carries an `owner`, and admin-only actions re-read the
+actor's role from the database (`requireAdmin`), so a role edited in devtools
+authorizes nothing. Workspace import re-owns rows to the importing user and
+keeps their ids, so re-importing your own export updates rows in place. If an
+id in the file already belongs to *another* account on the device, that row
+is imported as a copy with a new id — and automations and activity entries
+that pointed at it are rewritten to follow — so an import can never overwrite
+or take over someone else's data (`importWorkspace` in `lib/data.js`).
+
+Sign-in state (the session and the lockout counters) lives in
+`localStorage`. If the browser refuses to write it — storage full, blocked, or
+some private modes — it is kept in memory instead, so signing in still works
+and the lockout still holds; the session then lasts only until the tab
+closes. Usernames that can't exist are rejected before anything is written.
+
+## Accessibility and layout
+
+English and Arabic are both first-class, including right-to-left layout and
+translated screen-reader labels. Animated KPI counters give assistive tech the
+final value (never a "0" or a half-counted number) and don't count up in a
+background tab; the system "reduce motion" setting stops all animation.
+Two-column screens collapse to one column on phones, and their columns can't
+be stretched by a wide child, so no screen scrolls sideways from 375px up.
+
 ## Why online AI uses "Sign in with Hugging Face"
 
 Free, key-less public AI endpoints were tested and rejected: Pollinations'
@@ -72,6 +102,8 @@ each split comparison, exactly as scikit-learn does.
   retrieved sources and forbid invented figures, but a 0.6B model can still be
   wrong. The Trade module never lets the model supply legal content — only
   summarize cited sources.
+- **Blocked browser storage means a short session.** Where `localStorage`
+  can't be written, sign-in works for the current tab only (see above).
 - **Automations run while OmniCore is open.** A static site can't run jobs in
   the background after the tab closes.
 - **Slack delivery can't be confirmed.** Slack accepts browser posts but blocks

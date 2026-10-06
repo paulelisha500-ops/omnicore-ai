@@ -24,6 +24,24 @@ const SESSION_KEY = "omnicore_session";
 const LOCK_PREFIX = "omnicore_lock_";
 const USERNAME_RE = /^[a-z0-9][a-z0-9._-]{2,31}$/;
 
+// localStorage can throw (quota exceeded, storage blocked, some private
+// modes). Sign-in must still work then, so writes that fail are kept in memory
+// for this tab instead — the session simply won't survive a reload.
+const memory = new Map();
+const store = {
+  get(k) {
+    if (memory.has(k)) return memory.get(k);
+    try { return localStorage.getItem(k); } catch { return null; }
+  },
+  set(k, v) {
+    try { localStorage.setItem(k, v); memory.delete(k); } catch { memory.set(k, v); }
+  },
+  remove(k) {
+    memory.delete(k);
+    try { localStorage.removeItem(k); } catch { /* storage unavailable */ }
+  },
+};
+
 const enc = new TextEncoder();
 const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
 const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
@@ -93,12 +111,16 @@ export async function createAccount({ username, fullName, password }) {
 }
 
 function lockState(name) {
-  try { return JSON.parse(localStorage.getItem(LOCK_PREFIX + name)) || { fails: 0, until: 0 }; }
+  try { return JSON.parse(store.get(LOCK_PREFIX + name)) || { fails: 0, until: 0 }; }
   catch { return { fails: 0, until: 0 }; }
 }
 
 export async function signIn(username, password) {
   const name = normalizeUsername(username);
+  // No account can have a name outside the username rules, so refuse it
+  // before touching storage — otherwise any string, however long, would be
+  // written as a lockout key on every attempt.
+  if (!USERNAME_RE.test(name)) throw err("Incorrect username or password.", "اسم المستخدم أو كلمة المرور غير صحيحة.");
   const lock = lockState(name);
   if (lock.until > Date.now()) {
     const mins = Math.max(1, Math.ceil((lock.until - Date.now()) / 60000));
@@ -109,38 +131,38 @@ export async function signIn(username, password) {
   if (!ok) {
     const fails = (lock.until && lock.until <= Date.now() ? 0 : lock.fails) + 1;
     const next = { fails, until: fails >= LOCKOUT.maxFailures ? Date.now() + LOCKOUT.minutes * 60000 : 0 };
-    localStorage.setItem(LOCK_PREFIX + name, JSON.stringify(next));
+    store.set(LOCK_PREFIX + name, JSON.stringify(next));
     throw err("Incorrect username or password.", "اسم المستخدم أو كلمة المرور غير صحيحة.");
   }
-  localStorage.removeItem(LOCK_PREFIX + name);
+  store.remove(LOCK_PREFIX + name);
   return startSession(user);
 }
 
 function startSession(user) {
   const session = { username: user.username, issuedAt: Date.now(), expiresAt: Date.now() + SESSION_HOURS * 3600_000 };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  store.set(SESSION_KEY, JSON.stringify(session));
   return publicUser(user);
 }
 
 /** Returns the signed-in user, or null if there's no valid, unexpired session. */
 export async function restoreSession() {
   let s;
-  try { s = JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { s = null; }
+  try { s = JSON.parse(store.get(SESSION_KEY)); } catch { s = null; }
   if (!s || !s.username || !(s.expiresAt > Date.now())) {
-    localStorage.removeItem(SESSION_KEY);
+    store.remove(SESSION_KEY);
     return { user: null, expired: Boolean(s && s.expiresAt) };
   }
   const user = await db.get("users", s.username);
-  if (!user) { localStorage.removeItem(SESSION_KEY); return { user: null, expired: false }; }
+  if (!user) { store.remove(SESSION_KEY); return { user: null, expired: false }; }
   return { user: publicUser(user), expired: false };
 }
 
 export function sessionInfo() {
-  try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { return null; }
+  try { return JSON.parse(store.get(SESSION_KEY)); } catch { return null; }
 }
 
 export function signOut() {
-  localStorage.removeItem(SESSION_KEY);
+  store.remove(SESSION_KEY);
 }
 
 export async function changePassword(username, current, next) {

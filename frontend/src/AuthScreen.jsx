@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Zap, Globe, ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, ShieldCheck, HardDrive, KeyRound } from "lucide-react";
 import { PREAUTH_TOKENS } from "./LandingPage.jsx";
+import { commonText } from "./i18n.js";
 import { createAccount, signIn, hasAccounts, PASSWORD_POLICY, LOCKOUT } from "./lib/auth.js";
 import { logEvent, errText } from "./lib/data.js";
 
@@ -124,7 +125,7 @@ export default function AuthScreen({ lang, setLang, onAuthed, onBack, notice }) 
               {label("oc-pass", t.password)}
               <div style={{ position: "relative" }}>
                 {input("oc-pass", "password", show ? "text" : "password", creating ? "new-password" : "current-password")}
-                <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? "Hide password" : "Show password"} className="oc-focusable"
+                <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? commonText[lang].hidePassword : commonText[lang].showPassword} className="oc-focusable"
                   style={{ position: "absolute", insetInlineEnd: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--ink-faint)", padding: 6 }}>
                   {show ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>

@@ -5,6 +5,7 @@ import { addDoc, addRecord, deleteRecord, useRecords, logEvent, errText, timeAgo
 import { JURISDICTIONS, SECTORS, research, SYSTEM_EN, SYSTEM_AR } from "../lib/trade.js";
 import { sourceBlock } from "../lib/web.js";
 import { generate, stopGenerating } from "../lib/ai.js";
+import { commonText } from "../i18n.js";
 
 const T = {
   en: {
@@ -182,7 +183,7 @@ export default function Trade({ lang, user }) {
                   style={{ flex: 1, minWidth: 0, textAlign: "start", border: "none", background: "none", cursor: "pointer", fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--ink)" }}>{h.question}</button>
                 <Badge>{h.citations?.length || 0}</Badge>
                 <span style={{ fontSize: 11.5, color: "var(--ink-faint)", whiteSpace: "nowrap" }}>{timeAgo(h.at, lang)}</span>
-                <button onClick={() => deleteRecord(h.id)} aria-label="Delete" style={{ border: "none", background: "none", cursor: "pointer", color: "var(--ink-faint)" }}><Trash2 size={14} /></button>
+                <button onClick={() => deleteRecord(h.id)} aria-label={commonText[lang].delete} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--ink-faint)" }}><Trash2 size={14} /></button>
               </div>
             ))}
           </div>

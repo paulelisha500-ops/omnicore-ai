@@ -10,6 +10,8 @@ export const commonText = {
     settings: "Settings", profile: "Profile", logout: "Sign out", notifications: "Notifications",
     adminOnly: "Admin access required", adminOnlyDesc: "Security & Governance is restricted to Platform Admins. Ask an admin on this device to change your role.",
     more: "More", search: "Search", error: "Error",
+    remove: "Remove", mainNav: "Main navigation", quickNav: "Quick navigation",
+    showPassword: "Show password", hidePassword: "Hide password",
   },
   ar: {
     appName: "أومنيكور إيه آي", tagline: "نظام تشغيل ذكاء اصطناعي متعدد الوسائط للمؤسسات",
@@ -18,6 +20,8 @@ export const commonText = {
     settings: "الإعدادات", profile: "الملف الشخصي", logout: "تسجيل الخروج", notifications: "الإشعارات",
     adminOnly: "يتطلب صلاحية المسؤول", adminOnlyDesc: "الأمان والحوكمة مقتصر على مسؤولي المنصة. اطلب من مسؤول على هذا الجهاز تغيير دورك.",
     more: "المزيد", search: "بحث", error: "خطأ",
+    remove: "إزالة", mainNav: "التنقل الرئيسي", quickNav: "التنقل السريع",
+    showPassword: "إظهار كلمة المرور", hidePassword: "إخفاء كلمة المرور",
   },
 };
 

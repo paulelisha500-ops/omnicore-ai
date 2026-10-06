@@ -4,6 +4,7 @@ import { TrendingUp, AlertTriangle, CheckCircle2, Upload, Download, Database, Sa
 import { Card, CardTitle, SectionHeader, ModuleShell, Button, Badge, Notice, Segmented, Field, EmptyState, ProgressBar, useChartColors, tooltipStyle, toast } from "../ui.jsx";
 import { addRecord, deleteRecord, useRecords, logEvent, errText, timeAgo, download } from "../lib/data.js";
 import { loadModel, predictWith, FIELDS, DEFAULT_ROW, THRESHOLD, METRICS, CONFUSION, ROC, IMPORTANCE, parseCSV, toCSV, SAMPLE_CSV_URL } from "../lib/churn.js";
+import { commonText } from "../i18n.js";
 
 const T = {
   en: {
@@ -119,8 +120,11 @@ function Predict({ t, lang, user, model }) {
   // Keep dependent fields valid, exactly as they appear in the dataset: no
   // internet service means every internet add-on is "No internet service".
   const INTERNET_ADDONS = ["OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies"];
+  // Numbers are held to the field's range: a tenure of -5 or charges of 1e9
+  // aren't customers, and the model would still score them confidently.
+  const clamp = (f, n) => (Number.isFinite(n) ? Math.min(f.max, Math.max(f.min, n)) : f.def);
   const set = (f) => (e) => setRow((r) => {
-    const v = f.type === "number" || f.key === "SeniorCitizen" ? Number(e.target.value) : e.target.value;
+    const v = f.type === "number" ? clamp(f, Number(e.target.value)) : f.key === "SeniorCitizen" ? Number(e.target.value) : e.target.value;
     const next = { ...r, [f.key]: v };
     if (f.key === "InternetService") {
       for (const k of INTERNET_ADDONS) {
@@ -210,7 +214,7 @@ function Predict({ t, lang, user, model }) {
                 </span>
                 <span style={{ fontSize: 11.5, color: "var(--ink-faint)" }}>{timeAgo(s.at, lang)}</span>
                 <Button size="sm" variant="link" onClick={() => setRow({ ...DEFAULT_ROW, ...s.row })}>{lang === "ar" ? "فتح" : "Load"}</Button>
-                <button onClick={() => deleteRecord(s.id)} aria-label="Delete" style={{ border: "none", background: "none", cursor: "pointer", color: "var(--ink-faint)" }}><Trash2 size={14} /></button>
+                <button onClick={() => deleteRecord(s.id)} aria-label={commonText[lang].delete} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--ink-faint)" }}><Trash2 size={14} /></button>
               </div>
             ))}
           </div>

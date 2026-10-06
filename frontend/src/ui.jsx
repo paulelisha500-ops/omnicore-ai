@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Sparkles, RefreshCw, X, CheckCircle2, AlertTriangle, Info, Loader2, Square } from "lucide-react";
 import { NumberTicker, BorderBeam } from "./magicui.jsx";
+import { commonText } from "./i18n.js";
 
 /* ---------------------------------------------------------------------------
    Theme context (charts need concrete colours, not CSS variables)
@@ -134,8 +135,22 @@ export function Switch({ checked, onChange, disabled, label }) {
 }
 
 export function Segmented({ value, onChange, options, size = "md" }) {
+  // On a narrow screen the options scroll sideways; keep the selected one in
+  // view so the current choice isn't hidden past the edge. Only this box
+  // scrolls — scrollIntoView could also move the page. The box never scrolls
+  // vertically, so it drops .oc-scroll's reserved scrollbar gutter: in RTL
+  // Chrome offset the start position by that gutter and clipped the first option.
+  const ref = useRef(null);
+  useEffect(() => {
+    const box = ref.current;
+    const el = box?.querySelector('[aria-selected="true"]');
+    if (!el || box.scrollWidth <= box.clientWidth) return;
+    const b = box.getBoundingClientRect(), r = el.getBoundingClientRect();
+    if (r.left < b.left) box.scrollLeft -= b.left - r.left + 3;
+    else if (r.right > b.right) box.scrollLeft += r.right - b.right + 3;
+  }, [value]);
   return (
-    <div role="tablist" style={{ display: "inline-flex", background: "var(--surface-sunken)", borderRadius: 12, padding: 3, gap: 2, maxWidth: "100%", overflowX: "auto" }} className="oc-scroll">
+    <div ref={ref} role="tablist" style={{ display: "inline-flex", background: "var(--surface-sunken)", borderRadius: 12, padding: 3, gap: 2, maxWidth: "100%", overflowX: "auto", scrollbarGutter: "auto" }} className="oc-scroll">
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -235,7 +250,7 @@ export function Sheet({ open, onClose, title, children, footer, width = 520, dis
         {(title || dismissable) && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "16px 18px 4px" }}>
             <div className="oc-display" style={{ fontSize: 18, fontWeight: 700 }}>{title}</div>
-            {dismissable && <IconButton icon={X} onClick={onClose} title="Close" size={32} />}
+            {dismissable && <IconButton icon={X} onClick={onClose} title={commonText[document.documentElement.lang === "ar" ? "ar" : "en"].close} size={32} />}
           </div>
         )}
         <div style={{ padding: "10px 18px 18px" }}>{children}</div>

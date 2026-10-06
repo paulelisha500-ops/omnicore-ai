@@ -177,11 +177,13 @@ ${stats}`, maxTokens: 200, temperature: 0.3, onToken: (tok) => setInsight((s) =>
           </Card>
           <Card>
             <CardTitle>{t.quick}</CardTitle>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <Button variant="subtle" icon={Sparkles} onClick={() => go("chat")}>{t.ask}</Button>
-              <Button variant="subtle" icon={Upload} onClick={() => go("documents")}>{t.analyze}</Button>
-              <Button variant="subtle" icon={TrendingUp} onClick={() => go("analytics")}>{t.score}</Button>
-              <Button variant="subtle" icon={Search} onClick={() => go("search")}>{t.find}</Button>
+            {/* Wraps instead of a fixed two-column grid: the labels don't
+                wrap, so two columns forced the card wider than a phone. */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <Button variant="subtle" icon={Sparkles} onClick={() => go("chat")} style={{ flex: "1 1 auto" }}>{t.ask}</Button>
+              <Button variant="subtle" icon={Upload} onClick={() => go("documents")} style={{ flex: "1 1 auto" }}>{t.analyze}</Button>
+              <Button variant="subtle" icon={TrendingUp} onClick={() => go("analytics")} style={{ flex: "1 1 auto" }}>{t.score}</Button>
+              <Button variant="subtle" icon={Search} onClick={() => go("search")} style={{ flex: "1 1 auto" }}>{t.find}</Button>
             </div>
           </Card>
         </div>

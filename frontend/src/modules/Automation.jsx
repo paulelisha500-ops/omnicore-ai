@@ -5,6 +5,7 @@ import { useOwned, errText, timeAgo } from "../lib/data.js";
 import { TRIGGERS, ACTIONS, SCHEDULES, createRule, updateRule, deleteRule, runRule, refreshSchedules, triggerLabel, actionLabel } from "../lib/automation.js";
 import { TYPES as INTEG, describe } from "../lib/integrations.js";
 import { generateJSON } from "../lib/ai.js";
+import { commonText } from "../i18n.js";
 
 const T = {
   en: {
@@ -85,7 +86,7 @@ export default function Automation({ lang, user, go }) {
                   <div style={{ display: "flex", gap: 2 }}>
                     <IconButton icon={Play} title={t.runNow} onClick={() => runNow(r)} disabled={busyId === r.id} />
                     <IconButton icon={Pencil} title={t.edit} onClick={() => setEditing(r)} />
-                    <IconButton icon={Trash2} title="Delete" onClick={() => setConfirm(r)} />
+                    <IconButton icon={Trash2} title={commonText[lang].delete} onClick={() => setConfirm(r)} />
                   </div>
                 </div>
               </Card>

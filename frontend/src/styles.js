@@ -148,6 +148,11 @@ select.oc-input { appearance: none; -webkit-appearance: none; padding-inline-end
 .oc-topbar { height: 58px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 16px; position: sticky; top: 0; z-index: 20;
   background: color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid var(--border); }
 .oc-content { flex: 1; overflow-y: auto; padding: 26px; background: var(--bg); scroll-behavior: smooth; }
+/* Grid items default to min-width: auto, so one wide child (a row of
+   unwrapped buttons, a segmented control) stretches its whole column past the
+   pane and the page scrolls sideways on phones. Let the columns keep their
+   share; wide children wrap or scroll inside their own card. */
+.oc-grid-2 > *, .oc-grid-2b > *, .oc-dash-grid > * { min-width: 0; }
 .oc-sidebar-backdrop { display: none; }
 .oc-chat-h { height: calc(100dvh - 58px - 52px); }
 .oc-mobile-only { display: none !important; }
